@@ -127,12 +127,12 @@ extern crate wasmer_runtime_core;
 extern crate wasmer_singlepass_backend;
 
 use wasmer_runtime::{
-error as wasm_error, func, imports, instantiate, Array, Ctx, WasmPtr, Func, Value,
-compile_with, Instance
+  error as wasm_error, func, imports, instantiate, Array, Ctx, WasmPtr, Func, Value,
+  compile_with, Instance
 };
 use wasmer_runtime_core::{
-backend::Compiler, 
-codegen::{MiddlewareChain, StreamingCompiler},
+  backend::Compiler, 
+  codegen::{MiddlewareChain, StreamingCompiler},
 };
 use wasmer_middleware_common::metering::Metering;
 
@@ -187,13 +187,13 @@ pub fn add(wasm_path: String, x: i64, y: i64) -> wasm_error::Result<i64> {
 
 fn print_str(ctx: &mut Ctx, ptr: WasmPtr<u8, Array>, len: u32) {
 
-let memory = ctx.memory(0);
+  let memory = ctx.memory(0);
 
-// Use helper method on `WasmPtr` to read a utf8 string
-let string = ptr.get_utf8_string(memory, len).unwrap();
+  // Use helper method on `WasmPtr` to read a utf8 string
+  let string = ptr.get_utf8_string(memory, len).unwrap();
 
-// Print it!
-println!("{}", string);
+  // Print it!
+  println!("{}", string);
 }
 
 
