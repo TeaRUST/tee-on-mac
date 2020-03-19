@@ -10,8 +10,9 @@ use actix_multipart::Multipart;
 use actix_files;
 
 use std::io::Write;
-
-
+use std::fs::File;
+use std::io;
+use std::io::prelude::*;
 
 #[actix_rt::main]
 pub async fn main() -> std::io::Result<()> {
@@ -104,7 +105,10 @@ fn get_compiler(limit: u64) -> impl Compiler {
 fn get_instance(wasm_path: &str) -> Instance {
   let metering_compiler = get_compiler(1000);
   let path = format!("{}", wasm_path.to_string());
-  let wasm_binary: &'static [u8] = include_bytes!("../tmp/test.wasm");
+  let mut buffer = Vec::new();
+  let mut f = File::open(wasm_path).unwrap();//TODO: add exception handler
+  f.read_to_end(&mut buffer);
+  let wasm_binary: &[u8] = buffer.as_slice();
   let metering_module = compile_with(&wasm_binary, &metering_compiler).unwrap();
   let metering_import_object = imports! {
     "env" => {
