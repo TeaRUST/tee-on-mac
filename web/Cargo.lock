@@ -1608,6 +1608,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7fe5bd57d1d7414c6b5ed48563a2c855d995ff777729dcd91c369ec7fea395ae"
 
 [[package]]
+name = "request"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-service",
+ "actix-web",
+ "bytes",
+ "env_logger",
+ "futures",
+ "json",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "resolv-conf"
 version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2422,16 +2437,8 @@ checksum = "8b4eab1d9971d0803729cba3617b56eb04fcb4bd25361cb63880ed41a42f20d5"
 name = "web"
 version = "0.1.0"
 dependencies = [
- "actix-rt",
- "actix-service",
- "actix-web",
- "bytes",
- "env_logger",
- "futures",
- "json",
  "prost",
- "serde",
- "serde_json",
+ "request",
  "tokio",
  "tonic",
  "wasmer-middleware-common",

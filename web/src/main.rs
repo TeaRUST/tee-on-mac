@@ -1,205 +1,127 @@
-use actix_web::{
-    error, middleware, web, App, Error, HttpRequest, HttpResponse, HttpServer,
-};
-use bytes::{Bytes, BytesMut};
-use futures::StreamExt;
-use json::JsonValue;
-use serde::{Deserialize, Serialize};
+extern crate request;
 
 
-#[derive(Debug, Serialize, Deserialize)]
-struct MyObj {
-    name: String,
-    number: i32,
+
+fn main() {
+    // old_main();
+  request::start().unwrap();
+
 }
 
-/// This handler uses json extractor
-async fn index(item: web::Json<MyObj>) -> HttpResponse {
-    println!("model: {:?}", &item);
-    HttpResponse::Ok().json(item.0) // <- send response
-}
+// extern crate wasmer_runtime;
+// extern crate wasmer_middleware_common;
+// extern crate wasmer_runtime_core;
+// extern crate wasmer_singlepass_backend;
 
-/// This handler uses json extractor with limit
-async fn extract_item(item: web::Json<MyObj>, req: HttpRequest) -> HttpResponse {
-    println!("request: {:?}", req);
-    println!("model: {:?}", item);
+// use wasmer_runtime::{
+//   error as wasm_error, func, imports, instantiate, Array, Ctx, WasmPtr, Func, Value,
+//   compile_with, Instance
+// };
+// use wasmer_runtime_core::{
+//   backend::Compiler, 
+//   codegen::{MiddlewareChain, StreamingCompiler},
+// };
+// use wasmer_middleware_common::metering::Metering;
 
-    HttpResponse::Ok().json(item.0) // <- send json response
-}
+// static WASM: &'static [u8] =
+//     include_bytes!("../hello_world.wasm");
+//     // include_bytes!("../wasm-sample-app/target/wasm32-unknown-unknown/release/hello.wasm");
 
-const MAX_SIZE: usize = 262_144; // max payload size is 256k
+// fn get_compiler(limit: u64) -> impl Compiler {
+//   use wasmer_singlepass_backend::ModuleCodeGenerator as SinglePassMCG;
+//   let c: StreamingCompiler<SinglePassMCG, _, _, _, _> = StreamingCompiler::new(move || {
+//     let mut chain = MiddlewareChain::new();
+//     chain.push(Metering::new(limit));
+//     chain
+//   });
 
-/// This handler manually load request payload and parse json object
-async fn index_manual(mut payload: web::Payload) -> Result<HttpResponse, Error> {
-    // payload is a stream of Bytes objects
-    let mut body = BytesMut::new();
-    while let Some(chunk) = payload.next().await {
-        let chunk = chunk?;
-        // limit max size of in-memory payload
-        if (body.len() + chunk.len()) > MAX_SIZE {
-            return Err(error::ErrorBadRequest("overflow"));
-        }
-        body.extend_from_slice(&chunk);
-    }
+//   c
+// }
 
-    // body is loaded, now we can deserialize serde-json
-    let obj = serde_json::from_slice::<MyObj>(&body)?;
-    Ok(HttpResponse::Ok().json(obj)) // <- send response
-}
+// fn get_instance() -> Instance {
+//   let metering_compiler = get_compiler(1000);
+//   let wasm_binary = WASM;
+//   let metering_module = compile_with(&wasm_binary, &metering_compiler).unwrap();
+//   let metering_import_object = imports! {
+//     "env" => {
+//       "print_str" => func!(print_str),
+//     },
+//   };
 
-/// This handler manually load request payload and parse json-rust
-async fn index_mjsonrust(body: Bytes) -> Result<HttpResponse, Error> {
-    // body is loaded, now we can deserialize json-rust
-    let result = json::parse(std::str::from_utf8(&body).unwrap()); // return Result
-    let injson: JsonValue = match result {
-        Ok(v) => v,
-        Err(e) => json::object! {"err" => e.to_string() },
-    };
-    Ok(HttpResponse::Ok()
-        .content_type("application/json")
-        .body(injson.dump()))
-}
+//   let metering_instance = metering_module.instantiate(&metering_import_object).unwrap();
 
-#[actix_rt::main]
-async fn main() -> std::io::Result<()> {
-    old_main();
-    std::env::set_var("RUST_LOG", "actix_web=info");
-    env_logger::init();
+//   metering_instance
+// }
 
-    HttpServer::new(|| {
-        App::new()
-            // enable logger
-            .wrap(middleware::Logger::default())
-            .data(web::JsonConfig::default().limit(4096)) // <- limit size of the payload (global configuration)
-            .service(web::resource("/extractor").route(web::post().to(index)))
-            .service(
-                web::resource("/extractor2")
-                    .data(web::JsonConfig::default().limit(1024)) // <- limit size of the payload (resource level)
-                    .route(web::post().to(extract_item)),
-            )
-            .service(web::resource("/manual").route(web::post().to(index_manual)))
-            .service(web::resource("/mjsonrust").route(web::post().to(index_mjsonrust)))
-            .service(web::resource("/").route(web::post().to(index)))
-    })
-    .bind("0.0.0.0:8000")?
-    .run()
-    .await
-}
+// pub fn old_main() -> wasm_error::Result<()> {
+//   let metering_instance = get_instance();
 
-extern crate wasmer_runtime;
-extern crate wasmer_middleware_common;
-extern crate wasmer_runtime_core;
-extern crate wasmer_singlepass_backend;
+//   let mut rs = metering_instance.call("execute", &[])?;
 
-use wasmer_runtime::{
-  error as wasm_error, func, imports, instantiate, Array, Ctx, WasmPtr, Func, Value,
-  compile_with, Instance
-};
-use wasmer_runtime_core::{
-  backend::Compiler, 
-  codegen::{MiddlewareChain, StreamingCompiler},
-};
-use wasmer_middleware_common::metering::Metering;
-
-static WASM: &'static [u8] =
-    include_bytes!("../hello_world.wasm");
-    // include_bytes!("../wasm-sample-app/target/wasm32-unknown-unknown/release/hello.wasm");
-
-fn get_compiler(limit: u64) -> impl Compiler {
-  use wasmer_singlepass_backend::ModuleCodeGenerator as SinglePassMCG;
-  let c: StreamingCompiler<SinglePassMCG, _, _, _, _> = StreamingCompiler::new(move || {
-    let mut chain = MiddlewareChain::new();
-    chain.push(Metering::new(limit));
-    chain
-  });
-
-  c
-}
-
-fn get_instance() -> Instance {
-  let metering_compiler = get_compiler(1000);
-  let wasm_binary = WASM;
-  let metering_module = compile_with(&wasm_binary, &metering_compiler).unwrap();
-  let metering_import_object = imports! {
-    "env" => {
-      "print_str" => func!(print_str),
-    },
-  };
-
-  let metering_instance = metering_module.instantiate(&metering_import_object).unwrap();
-
-  metering_instance
-}
-
-pub fn old_main() -> wasm_error::Result<()> {
-  let metering_instance = get_instance();
-
-  let mut rs = metering_instance.call("execute", &[])?;
-
-  let x = wasmer_middleware_common::metering::get_points_used(&metering_instance);
+//   let x = wasmer_middleware_common::metering::get_points_used(&metering_instance);
   
-  println!("gas: {:}", x);
-  Ok(())
+//   println!("gas: {:}", x);
+//   Ok(())
 
-}
+// }
 
-pub fn add(x: i64, y: i64) -> wasm_error::Result<i64> {
-  let metering_instance = get_instance();
-  let rs = metering_instance.call("add", &[Value::I64(x), Value::I64(y)])?;
+// pub fn add(x: i64, y: i64) -> wasm_error::Result<i64> {
+//   let metering_instance = get_instance();
+//   let rs = metering_instance.call("add", &[Value::I64(x), Value::I64(y)])?;
 
-  let gas = wasmer_middleware_common::metering::get_points_used(&metering_instance);
+//   let gas = wasmer_middleware_common::metering::get_points_used(&metering_instance);
   
-  let n = rs.get(0).unwrap().to_u128() as i64;
+//   let n = rs.get(0).unwrap().to_u128() as i64;
 
-  println!("wasm result: {} ||| gas: {}", n, gas);
-  Ok(n)
-}
+//   println!("wasm result: {} ||| gas: {}", n, gas);
+//   Ok(n)
+// }
 
 
-// function list start
+// // function list start
 
-fn print_str(ctx: &mut Ctx, ptr: WasmPtr<u8, Array>, len: u32) {
+// fn print_str(ctx: &mut Ctx, ptr: WasmPtr<u8, Array>, len: u32) {
   
-  let memory = ctx.memory(0);
+//   let memory = ctx.memory(0);
 
-  // Use helper method on `WasmPtr` to read a utf8 string
-  let string = ptr.get_utf8_string(memory, len).unwrap();
+//   // Use helper method on `WasmPtr` to read a utf8 string
+//   let string = ptr.get_utf8_string(memory, len).unwrap();
 
-  // Print it!
-  println!("{}", string);
-}
+//   // Print it!
+//   println!("{}", string);
+// }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use actix_web::dev::Service;
-    use actix_web::{http, test, web, App};
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+//     use actix_web::dev::Service;
+//     use actix_web::{http, test, web, App};
 
-    #[actix_rt::test]
-    async fn test_index() -> Result<(), Error> {
-        let mut app = test::init_service(
-            App::new().service(web::resource("/").route(web::post().to(index))),
-        )
-        .await;
+//     #[actix_rt::test]
+//     async fn test_index() -> Result<(), Error> {
+//         let mut app = test::init_service(
+//             App::new().service(web::resource("/").route(web::post().to(index))),
+//         )
+//         .await;
 
-        let req = test::TestRequest::post()
-            .uri("/")
-            .set_json(&MyObj {
-                name: "my-name".to_owned(),
-                number: 43,
-            })
-            .to_request();
-        let resp = app.call(req).await.unwrap();
+//         let req = test::TestRequest::post()
+//             .uri("/")
+//             .set_json(&MyObj {
+//                 name: "my-name".to_owned(),
+//                 number: 43,
+//             })
+//             .to_request();
+//         let resp = app.call(req).await.unwrap();
 
-        assert_eq!(resp.status(), http::StatusCode::OK);
+//         assert_eq!(resp.status(), http::StatusCode::OK);
 
-        let response_body = match resp.response().body().as_ref() {
-            Some(actix_web::body::Body::Bytes(bytes)) => bytes,
-            _ => panic!("Response error"),
-        };
+//         let response_body = match resp.response().body().as_ref() {
+//             Some(actix_web::body::Body::Bytes(bytes)) => bytes,
+//             _ => panic!("Response error"),
+//         };
 
-        assert_eq!(response_body, r##"{"name":"my-name","number":43}"##);
+//         assert_eq!(response_body, r##"{"name":"my-name","number":43}"##);
 
-        Ok(())
-    }
-}
+//         Ok(())
+//     }
+// }
