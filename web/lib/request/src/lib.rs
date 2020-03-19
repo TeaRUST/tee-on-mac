@@ -1,10 +1,18 @@
-use actix_web::{
+pub use actix_web::{
     error, middleware, web, App, Error, HttpRequest, HttpResponse, HttpServer,
 };
-use bytes::{Bytes, BytesMut};
+pub use bytes::{Bytes, BytesMut};
 use futures::StreamExt;
-use json::JsonValue;
+pub use json::JsonValue;
 use serde::{Deserialize, Serialize};
+
+use actix_multipart::Multipart;
+use actix_files;
+
+use std::io::Write;
+
+
+
 
 #[derive(Debug, Serialize, Deserialize)]
 struct MyObj {
@@ -66,7 +74,7 @@ pub async fn start() -> std::io::Result<()> {
     env_logger::init();
 
     HttpServer::new(|| {
-        App::new()
+        let app = App::new()
             // enable logger
             .wrap(middleware::Logger::default())
             .data(web::JsonConfig::default().limit(4096)) // <- limit size of the payload (global configuration)
@@ -79,9 +87,58 @@ pub async fn start() -> std::io::Result<()> {
             .service(web::resource("/manual").route(web::post().to(index_manual)))
             .service(web::resource("/mjsonrust").route(web::post().to(index_mjsonrust)))
             .service(web::resource("/").route(web::post().to(index)))
-            .default_service(web::route().to(|| HttpResponse::Forbidden()))
+
+            .service(
+                web::resource("/upload_wasm")
+                .route(web::post().to(upload_wasm))
+            )
+            .service(
+                actix_files::Files::new("/html/", "./html/").index_file("index.html"),
+            );
+        app.default_service(web::route().to(|| HttpResponse::Forbidden()))
     })
     .bind("0.0.0.0:8000")?
     .run()
     .await
 }
+
+async fn upload_wasm(
+    mut payload: Multipart
+) -> Result<HttpResponse, Error> {
+
+    while let Some(item) = payload.next().await {
+        let mut field = item?;
+        let content_type = field.content_disposition().unwrap();
+        let filename = content_type.get_filename().unwrap();
+        let filepath = format!("./tmp/{}", filename);
+        // File::create is blocking operation, use threadpool
+        let mut f = web::block(|| std::fs::File::create(filepath))
+            .await
+            .unwrap();
+        // Field in turn is stream of *Bytes* object
+        while let Some(chunk) = field.next().await {
+            let data = chunk.unwrap();
+            // filesystem operations are blocking, we have to use threadpool
+            f = web::block(move || f.write_all(&data).map(|_| f)).await?;
+        }
+    }
+    Ok(HttpResponse::Ok().body("success".to_string()))
+}
+
+
+// TODO
+#[derive(Debug, Clone)]
+pub struct Request {
+    
+}
+
+impl Request {
+    // fn new() -> Request{
+        
+    // }
+
+    // pub async fn start(&self) -> std::io::Result<()> {
+        
+    // }
+}
+
