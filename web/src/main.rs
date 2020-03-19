@@ -77,12 +77,12 @@ extern crate wasmer_runtime_core;
 extern crate wasmer_singlepass_backend;
 
 use wasmer_runtime::{
-error as wasm_error, func, imports, instantiate, Array, Ctx, WasmPtr, Func, Value,
-compile_with, Instance
+  error as wasm_error, func, imports, instantiate, Array, Ctx, WasmPtr, Func, Value,
+  compile_with, Instance
 };
 use wasmer_runtime_core::{
-backend::Compiler, 
-codegen::{MiddlewareChain, StreamingCompiler},
+  backend::Compiler, 
+  codegen::{MiddlewareChain, StreamingCompiler},
 };
 use wasmer_middleware_common::metering::Metering;
 
@@ -104,19 +104,17 @@ fn get_compiler(limit: u64) -> impl Compiler {
 fn get_instance(wasm_path: &str) -> Instance {
   let metering_compiler = get_compiler(1000);
   let path = format!("{}", wasm_path.to_string());
-    let wasm_binary: &'static [u8] = include_bytes!("../tmp/test.wasm");
-    let metering_module = compile_with(&wasm_binary, &metering_compiler).unwrap();
-    let metering_import_object = imports! {
-      "env" => {
-        "print_str" => func!(print_str),
-      },
-    };
-  
-    let metering_instance = metering_module.instantiate(&metering_import_object).unwrap();
-  
-    metering_instance
-  
-  
+  let wasm_binary: &'static [u8] = include_bytes!("../tmp/test.wasm");
+  let metering_module = compile_with(&wasm_binary, &metering_compiler).unwrap();
+  let metering_import_object = imports! {
+    "env" => {
+      "print_str" => func!(print_str),
+    },
+  };
+
+  let metering_instance = metering_module.instantiate(&metering_import_object).unwrap();
+
+  metering_instance
 }
 
 
@@ -137,12 +135,12 @@ pub fn add(wasm_path: &str, x: i64, y: i64) -> wasm_error::Result<i64> {
 
 fn print_str(ctx: &mut Ctx, ptr: WasmPtr<u8, Array>, len: u32) {
 
-let memory = ctx.memory(0);
+  let memory = ctx.memory(0);
 
-// Use helper method on `WasmPtr` to read a utf8 string
-let string = ptr.get_utf8_string(memory, len).unwrap();
+  // Use helper method on `WasmPtr` to read a utf8 string
+  let string = ptr.get_utf8_string(memory, len).unwrap();
 
-// Print it!
-println!("{}", string);
+  // Print it!
+  println!("{}", string);
 }
 
