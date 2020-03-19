@@ -10,9 +10,21 @@ use actix_multipart::Multipart;
 use actix_files;
 
 use std::io::Write;
-use std::fs::File;
-use std::io;
-use std::io::prelude::*;
+use std::rc::Rc;
+
+use std::collections::HashMap;
+use mut_static::MutStatic;
+
+#[macro_use]
+extern crate lazy_static;
+
+lazy_static! {
+  static ref Cache: MutStatic<HashMap<String, String>> = {
+    MutStatic::from(HashMap::new())
+    
+  };
+}
+
 
 #[actix_rt::main]
 pub async fn main() -> std::io::Result<()> {
@@ -42,31 +54,68 @@ async fn upload_wasm(
     mut payload: Multipart
 ) -> Result<HttpResponse, Error> {
   
-
   while let Some(item) = payload.next().await {
+    println!("{:?}", item);
     let mut field = item?;
+    
     let content_type = field.content_disposition().unwrap();
-    let filename = content_type.get_filename().unwrap();
-    let path = String::from("./tmp/test.wasm");
-    // File::create is blocking operation, use threadpool
-    let mut f = web::block(|| std::fs::File::create(path))
-        .await
-        .unwrap();
-    // Field in turn is stream of *Bytes* object
-    while let Some(chunk) = field.next().await {
-        let data = chunk.unwrap();
-        // filesystem operations are blocking, we have to use threadpool
-        f = web::block(move || f.write_all(&data).map(|_| f)).await?;
+    let key = content_type.get_name().unwrap();
+    println!("--- {:?}", key);
+
+    if (key == "file") {
+      let filename = content_type.get_filename().unwrap();
+      let path = String::from(format!("./tmp/{}", filename));
+
+      let mut cache = Cache.write().unwrap();
+      cache.insert(key.to_owned(), format!("./tmp/{}", filename));
+
+      // File::create is blocking operation, use threadpool
+      let mut f = web::block(|| std::fs::File::create(path))
+          .await
+          .unwrap();
+      // Field in turn is stream of *Bytes* object
+      while let Some(chunk) = field.next().await {
+          let data = chunk.unwrap();
+          // filesystem operations are blocking, we have to use threadpool
+          f = web::block(move || f.write_all(&data).map(|_| f)).await?;
+      }
+
+      
     }
+    else if (key == "x" || key == "y") {
+
+      while let Some(val) = field.next().await {
+        let data = val.unwrap();
+        let xx = std::str::from_utf8(&data).unwrap().to_owned();
+
+        let mut cache = Cache.write().unwrap();
+        cache.insert(key.to_owned(), xx);
+      }
+
+      
+    }
+    
 
   }
 
   println!("upload success");
 
-  let x = add("./tmp/test.wasm", 20, 40).unwrap();
+
+  let cache = Cache.read().unwrap();
+  println!("{:?}", cache.values());
+
+  let x = add(
+    cache.get("file").unwrap().to_string(),
+    cache.get("x").unwrap().parse::<i64>().unwrap(),
+    cache.get("y").unwrap().parse::<i64>().unwrap()
+  ).unwrap();
   println!("result : {}", x);
   
-  Ok(HttpResponse::Ok().body("success".to_string()))
+  Ok(HttpResponse::Ok().body(x.to_string()))
+}
+
+async fn save_wasm_file() {
+
 }
 
 
@@ -102,27 +151,26 @@ fn get_compiler(limit: u64) -> impl Compiler {
   c
 }
 
-fn get_instance(wasm_path: &str) -> Instance {
+fn get_instance(wasm_path: String) -> Instance {
   let metering_compiler = get_compiler(1000);
-  let path = format!("{}", wasm_path.to_string());
-  let mut buffer = Vec::new();
-  let mut f = File::open(wasm_path).unwrap();//TODO: add exception handler
-  f.read_to_end(&mut buffer);
-  let wasm_binary: &[u8] = buffer.as_slice();
-  let metering_module = compile_with(&wasm_binary, &metering_compiler).unwrap();
-  let metering_import_object = imports! {
-    "env" => {
-      "print_str" => func!(print_str),
-    },
-  };
 
-  let metering_instance = metering_module.instantiate(&metering_import_object).unwrap();
-
-  metering_instance
+    let wasm_binary = std::fs::read(wasm_path).unwrap();
+    let metering_module = compile_with(&wasm_binary, &metering_compiler).unwrap();
+    let metering_import_object = imports! {
+      "env" => {
+        "print_str" => func!(print_str),
+      },
+    };
+  
+    let metering_instance = metering_module.instantiate(&metering_import_object).unwrap();
+  
+    metering_instance
+  
+  
 }
 
 
-pub fn add(wasm_path: &str, x: i64, y: i64) -> wasm_error::Result<i64> {
+pub fn add(wasm_path: String, x: i64, y: i64) -> wasm_error::Result<i64> {
   let metering_instance = get_instance(wasm_path);
   let rs = metering_instance.call("add", &[Value::I64(x), Value::I64(y)])?;
 
@@ -148,3 +196,9 @@ fn print_str(ctx: &mut Ctx, ptr: WasmPtr<u8, Array>, len: u32) {
   println!("{}", string);
 }
 
+
+
+// fn main(){
+//   let wasm_path = String::from("./tmp/test.wasm");
+//   add(wasm_path, 1, 20);
+// }
