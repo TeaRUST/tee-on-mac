@@ -79,6 +79,7 @@ pub async fn start() -> std::io::Result<()> {
             .service(web::resource("/manual").route(web::post().to(index_manual)))
             .service(web::resource("/mjsonrust").route(web::post().to(index_mjsonrust)))
             .service(web::resource("/").route(web::post().to(index)))
+            .default_service(web::route().to(|| HttpResponse::Forbidden()))
     })
     .bind("0.0.0.0:8000")?
     .run()
