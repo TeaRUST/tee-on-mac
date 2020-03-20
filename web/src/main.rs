@@ -15,19 +15,30 @@ use std::rc::Rc;
 use std::collections::HashMap;
 use mut_static::MutStatic;
 
+mod crypto;
+mod mem_cache;
+mod wasm_imports;
+
+use crypto::{sha_256};
+use mem_cache::{display_module_map};
+
 #[macro_use]
 extern crate lazy_static;
 
 lazy_static! {
-  static ref Cache: MutStatic<HashMap<String, String>> = {
+  pub static ref Cache: MutStatic<HashMap<String, String>> = {
     MutStatic::from(HashMap::new())
     
+  };
+
+  pub static ref ModuleMap: MutStatic<HashMap<String, wasmer_runtime::Module>> = {
+    MutStatic::from(HashMap::new())
   };
 }
 
 
 #[actix_rt::main]
-pub async fn main() -> std::io::Result<()> {
+pub async fn main1() -> std::io::Result<()> {
 
   std::env::set_var("RUST_LOG", "actix_web=info");
   env_logger::init();
@@ -120,85 +131,36 @@ async fn save_wasm_file() {
 
 
 // runtime
+mod runtime;
+use runtime::{get_instance};
 
-extern crate wasmer_runtime;
-extern crate wasmer_middleware_common;
-extern crate wasmer_runtime_core;
-extern crate wasmer_singlepass_backend;
+
 
 use wasmer_runtime::{
   error as wasm_error, func, imports, instantiate, Array, Ctx, WasmPtr, Func, Value,
-  compile_with, Instance
+  compile_with, Instance,
 };
-use wasmer_runtime_core::{
-  backend::Compiler, 
-  codegen::{MiddlewareChain, StreamingCompiler},
-};
-use wasmer_middleware_common::metering::Metering;
 
-// static WASM: &'static [u8] =
-//   include_bytes!("../hello_world.wasm");
-  // include_bytes!("../wasm-sample-app/target/wasm32-unknown-unknown/release/hello.wasm");
-
-fn get_compiler(limit: u64) -> impl Compiler {
-  use wasmer_singlepass_backend::ModuleCodeGenerator as SinglePassMCG;
-  let c: StreamingCompiler<SinglePassMCG, _, _, _, _> = StreamingCompiler::new(move || {
-    let mut chain = MiddlewareChain::new();
-    chain.push(Metering::new(limit));
-    chain
-  });
-
-  c
-}
-
-fn get_instance(wasm_path: String) -> Instance {
-  let metering_compiler = get_compiler(1000);
-
-    let wasm_binary = std::fs::read(wasm_path).unwrap();
-    let metering_module = compile_with(&wasm_binary, &metering_compiler).unwrap();
-    let metering_import_object = imports! {
-      "env" => {
-        "print_str" => func!(print_str),
-      },
-    };
-  
-    let metering_instance = metering_module.instantiate(&metering_import_object).unwrap();
-  
-    metering_instance
-  
-  
-}
+use wasmer_middleware_common::metering;
 
 
 pub fn add(wasm_path: String, x: i64, y: i64) -> wasm_error::Result<i64> {
-  let metering_instance = get_instance(wasm_path);
+  let wasm_binary = std::fs::read(wasm_path).unwrap();
+  let metering_instance = get_instance(&wasm_binary);
   let rs = metering_instance.call("add", &[Value::I64(x), Value::I64(y)])?;
 
-  let gas = wasmer_middleware_common::metering::get_points_used(&metering_instance);
+  let gas = metering::get_points_used(&metering_instance);
 
   let n = rs.get(0).unwrap().to_u128() as i64;
-
   println!("wasm result: {} ||| gas: {}", n, gas);
+
   Ok(n)
 }
 
+fn main(){
+  println!("start");
+  let wasm_path = String::from("./tmp/test.wasm");
+  add(wasm_path, 1, 20);
 
-// function list start
-
-fn print_str(ctx: &mut Ctx, ptr: WasmPtr<u8, Array>, len: u32) {
-
-  let memory = ctx.memory(0);
-
-  // Use helper method on `WasmPtr` to read a utf8 string
-  let string = ptr.get_utf8_string(memory, len).unwrap();
-
-  // Print it!
-  println!("{}", string);
+  display_module_map();
 }
-
-
-
-// fn main(){
-//   let wasm_path = String::from("./tmp/test.wasm");
-//   add(wasm_path, 1, 20);
-// }

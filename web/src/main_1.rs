@@ -169,37 +169,37 @@ let string = ptr.get_utf8_string(memory, len).unwrap();
 println!("{}", string);
 }
 
-#[cfg(test)]
-mod tests {
-  use super::*;
-  use actix_web::dev::Service;
-  use actix_web::{http, test, web, App};
+// #[cfg(test)]
+// mod tests {
+//   use super::*;
+//   use actix_web::dev::Service;
+//   use actix_web::{http, test, web, App};
 
-  #[actix_rt::test]
-  async fn test_index() -> Result<(), Error> {
-      let mut app = test::init_service(
-          App::new().service(web::resource("/").route(web::post().to(index))),
-      )
-      .await;
+//   #[actix_rt::test]
+//   async fn test_index() -> Result<(), Error> {
+//       let mut app = test::init_service(
+//           App::new().service(web::resource("/").route(web::post().to(index))),
+//       )
+//       .await;
 
-      let req = test::TestRequest::post()
-          .uri("/")
-          .set_json(&MyObj {
-              name: "my-name".to_owned(),
-              number: 43,
-          })
-          .to_request();
-      let resp = app.call(req).await.unwrap();
+//       let req = test::TestRequest::post()
+//           .uri("/")
+//           .set_json(&MyObj {
+//               name: "my-name".to_owned(),
+//               number: 43,
+//           })
+//           .to_request();
+//       let resp = app.call(req).await.unwrap();
 
-      assert_eq!(resp.status(), http::StatusCode::OK);
+//       assert_eq!(resp.status(), http::StatusCode::OK);
 
-      let response_body = match resp.response().body().as_ref() {
-          Some(actix_web::body::Body::Bytes(bytes)) => bytes,
-          _ => panic!("Response error"),
-      };
+//       let response_body = match resp.response().body().as_ref() {
+//           Some(actix_web::body::Body::Bytes(bytes)) => bytes,
+//           _ => panic!("Response error"),
+//       };
 
-      assert_eq!(response_body, r##"{"name":"my-name","number":43}"##);
+//       assert_eq!(response_body, r##"{"name":"my-name","number":43}"##);
 
-      Ok(())
-  }
-}
+//       Ok(())
+//   }
+// }

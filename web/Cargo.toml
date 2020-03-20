@@ -33,3 +33,5 @@ json = "*"
 lazy_static = "1.4.0"
 mut_static = "5.0.0"
 
+crypto-hash = "0.3.4"
+
