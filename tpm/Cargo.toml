@@ -1,0 +1,12 @@
+[package]
+name = "tpm"
+version = "0.1.0"
+edition = "2018"
+
+
+[dependencies]
+wasmer-runtime = "0.16.2"
+wasmer-middleware-common = "0.16.2"
+wasmer-runtime-core = "0.16.2"
+wasmer-singlepass-backend = "0.16.2"
+wasmer-emscripten = "0.16.2"
