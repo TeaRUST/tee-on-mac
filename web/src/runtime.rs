@@ -1,6 +1,9 @@
 use wasmer_runtime::{
   error as wasm_error, func, imports, instantiate, Array, Ctx, WasmPtr, Func, Value,
-  compile_with, Instance, Module
+  compile_with, Instance, Module, 
+  cache::{
+    WasmHash, FileSystemCache
+  }
 };
 use wasmer_runtime_core::{
   backend::Compiler, 
@@ -12,7 +15,7 @@ use std::vec::Vec;
 // use crate::crypto1::{a};
 
 use crate::crypto::{sha_256};
-use crate::mem_cache::{set_module_map};
+use crate::mem_cache::{get_module_cache};
 use crate::wasm_imports::{print_str};
 
 
@@ -31,23 +34,45 @@ fn get_module(wasm: &Vec<u8>) -> Module {
   
   let compiler = get_compiler();
 
-  let hash = sha_256(wasm);
-  
-  // try to find from cache
-  // let mm = get_obj();
-  // if(mm.contains_key(&hash)){
-  //   println!("{}", "hash");
-  //   return mm.get(&hash).unwrap().to_owned();
-  // }
+  let hasher = WasmHash::generate(&wasm);
+  let hash = hasher.encode();
+
+  {
+    // try to find from cache
+    let mm = get_module_cache().try_lock().unwrap();
+      
+    if(mm.contains_key(&hash)){
+      println!("======================, {}", mm.contains_key(&hash));
+      return mm.get(&hash).unwrap().to_owned();
+    }
+
+  }
   
   let module = compile_with(&wasm, &compiler).unwrap();
 
-  
   // save module to cache
-  // let mut mm = ModuleMap.write().unwrap();
-  set_module_map(hash, module.clone());
-  // mm.insert(hash, module.clone());
+  {
+    let mut mm = get_module_cache().try_lock().unwrap();
+    println!("save hash : {}", hash);
+    mm.insert(hash, module.clone());
+  }
+  
+
+  save_module(hasher, module.clone());
+
+
   module
+}
+
+fn save_module(hash: WasmHash, module: Module) -> Result<(), wasm_error::CacheError>{
+  use wasmer_runtime::cache::Cache;
+  let mut fs_cache = unsafe {
+    FileSystemCache::new(format!("./tmp/{}", hash.encode()))?
+  };
+
+  fs_cache.store(hash, module)?;
+
+  Ok(())
 }
 
 pub fn get_instance(wasm: &Vec<u8>) -> Instance {

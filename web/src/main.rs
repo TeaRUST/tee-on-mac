@@ -20,7 +20,7 @@ mod mem_cache;
 mod wasm_imports;
 
 use crypto::{sha_256};
-use mem_cache::{display_module_map};
+use mem_cache::{get_module_cache};
 
 #[macro_use]
 extern crate lazy_static;
@@ -38,7 +38,7 @@ lazy_static! {
 
 
 #[actix_rt::main]
-pub async fn main1() -> std::io::Result<()> {
+pub async fn main() -> std::io::Result<()> {
 
   std::env::set_var("RUST_LOG", "actix_web=info");
   env_logger::init();
@@ -157,10 +157,12 @@ pub fn add(wasm_path: String, x: i64, y: i64) -> wasm_error::Result<i64> {
   Ok(n)
 }
 
-fn main(){
+fn main1(){
   println!("start");
   let wasm_path = String::from("./tmp/test.wasm");
   add(wasm_path, 1, 20);
+  add(String::from("./tmp/hello_world.wasm"), 1, 20);
 
-  display_module_map();
+  let mm = get_module_cache().lock().unwrap();
+  println!("{:?}", mm.keys());
 }

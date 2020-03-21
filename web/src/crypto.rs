@@ -7,13 +7,13 @@ pub fn sha_256(input: &[u8]) -> String {
 }
 
 
-#[cfg(test)]
-mod tests {
-  use super::{sha_256};
+// #[cfg(test)]
+// mod tests {
+//   use super::{sha_256};
   
-  #[test]
-  fn test_sha_256(){
-    let rs = sha_256("hello,jacky".as_bytes());
-    assert_eq!(rs, "E334A08F6CF24050364D550625473B5F2EE7BAF8C5ACAAEA26C79D80753F2028".to_lowercase());
-  }
-}
+//   #[test]
+//   fn test_sha_256(){
+//     let rs = sha_256("hello,jacky".as_bytes());
+//     assert_eq!(rs, "E334A08F6CF24050364D550625473B5F2EE7BAF8C5ACAAEA26C79D80753F2028".to_lowercase());
+//   }
+// }
