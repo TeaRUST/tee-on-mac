@@ -1177,9 +1177,9 @@ dependencies = [
 
 [[package]]
 name = "hyper"
-version = "0.13.3"
+version = "0.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7b15203263d1faa615f9337d79c1d37959439dc46c2b4faab33286fadc2a1c5"
+checksum = "ed6081100e960d9d74734659ffc9cc91daf1c0fc7aceb8eaa94ee1a3f5046f2e"
 dependencies = [
  "bytes",
  "futures-channel",
@@ -1661,14 +1661,9 @@ checksum = "74490b50b9fbe561ac330df47c08f3f33073d2d00c150f719147d7c54522fa1b"
 
 [[package]]
 name = "proc-macro-hack"
-version = "0.5.12"
+version = "0.5.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f918f2b601f93baa836c1c2945faef682ba5b6d4828ecb45eeb7cc3c71b811b4"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
+checksum = "fcfdefadc3d57ca21cf17990a28ef4c0f7c61383a28cb7604cf4a18e6ede1420"
 
 [[package]]
 name = "proc-macro-nested"
@@ -2010,9 +2005,9 @@ checksum = "2d67a5a62ba6e01cb2192ff309324cb4875d0c451d55fe2319433abe7a05a8ee"
 
 [[package]]
 name = "syn"
-version = "1.0.16"
+version = "1.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "123bd9499cfb380418d509322d7a6d52e5315f064fe4b3ad18a53d6b92c07859"
+checksum = "0df0eb663f387145cab623dea85b09c2c5b4b0aef44e945d928e682fce71bb03"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2048,18 +2043,18 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "1.0.11"
+version = "1.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee14bf8e6767ab4c687c9e8bc003879e042a96fd67a3ba5934eadb6536bef4db"
+checksum = "268c0f167625b8b0cc90a91787b158a372b4edadb31d6e20479dc787309defad"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "1.0.11"
+version = "1.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7b51e1fbc44b5a0840be594fbc0f960be09050f2617e61e6aa43bef97cd3ef4"
+checksum = "9a3ecbaa927a1d5a73d14a20af52463fa433c0727d07ef5e208f0546841d2efd"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2622,9 +2617,9 @@ dependencies = [
  "target-lexicon",
  "wasmer-clif-fork-frontend",
  "wasmer-clif-fork-wasm",
- "wasmer-runtime-core 0.14.1",
+ "wasmer-runtime-core",
  "wasmer-win-exception-handler",
- "wasmparser 0.45.2",
+ "wasmparser",
  "winapi 0.3.8",
 ]
 
@@ -2651,7 +2646,7 @@ dependencies = [
  "log",
  "thiserror",
  "wasmer-clif-fork-frontend",
- "wasmparser 0.45.2",
+ "wasmparser",
 ]
 
 [[package]]
@@ -2660,7 +2655,7 @@ version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "24a15e6c615e8d3a8c6158acfb8cf4ca02cd8d174232a478c9df422505c2a2b5"
 dependencies = [
- "wasmer-runtime-core 0.14.1",
+ "wasmer-runtime-core",
 ]
 
 [[package]]
@@ -2674,7 +2669,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "wasmer-clif-backend",
- "wasmer-runtime-core 0.14.1",
+ "wasmer-runtime-core",
 ]
 
 [[package]]
@@ -2701,36 +2696,7 @@ dependencies = [
  "serde_bytes",
  "serde_derive",
  "smallvec 0.6.13",
- "wasmparser 0.45.2",
- "winapi 0.3.8",
-]
-
-[[package]]
-name = "wasmer-runtime-core"
-version = "0.16.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e32bdb04d008eb136c88a12c0fdfb7e5d7ff30b208af4bef1d292d863eb1ba2"
-dependencies = [
- "bincode",
- "blake3",
- "cc",
- "digest",
- "errno",
- "hex 0.4.2",
- "indexmap",
- "lazy_static",
- "libc",
- "nix",
- "page_size",
- "parking_lot",
- "rustc_version",
- "serde",
- "serde-bench",
- "serde_bytes",
- "serde_derive",
- "smallvec 0.6.13",
- "target-lexicon",
- "wasmparser 0.51.4",
+ "wasmparser",
  "winapi 0.3.8",
 ]
 
@@ -2750,14 +2716,14 @@ dependencies = [
  "serde",
  "serde_derive",
  "smallvec 0.6.13",
- "wasmer-runtime-core 0.14.1",
+ "wasmer-runtime-core",
 ]
 
 [[package]]
 name = "wasmer-wasi"
-version = "0.16.2"
+version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19476c7c8f5c64611d2cc6bc7a4781d4016cb80f97c0284431fde502082b27b3"
+checksum = "15a4081b1964725a1c43e1362db5afa6d53e7b4ba204db469fb35c92c06a402e"
 dependencies = [
  "bincode",
  "byteorder",
@@ -2768,7 +2734,7 @@ dependencies = [
  "serde",
  "time",
  "typetag",
- "wasmer-runtime-core 0.16.2",
+ "wasmer-runtime-core",
  "winapi 0.3.8",
 ]
 
@@ -2780,7 +2746,7 @@ checksum = "8e5ede589f678bb6c061e173394506589fd2bae9165d841b218c5d07b3082cd4"
 dependencies = [
  "cmake",
  "libc",
- "wasmer-runtime-core 0.14.1",
+ "wasmer-runtime-core",
  "winapi 0.3.8",
 ]
 
@@ -2789,12 +2755,6 @@ name = "wasmparser"
 version = "0.45.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b4eab1d9971d0803729cba3617b56eb04fcb4bd25361cb63880ed41a42f20d5"
-
-[[package]]
-name = "wasmparser"
-version = "0.51.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aeb1956b19469d1c5e63e459d29e7b5aa0f558d9f16fcef09736f8a265e6c10a"
 
 [[package]]
 name = "web"
@@ -2818,9 +2778,10 @@ dependencies = [
  "serde_json",
  "tokio",
  "tonic",
+ "typetag",
  "wasmer-middleware-common",
  "wasmer-runtime",
- "wasmer-runtime-core 0.14.1",
+ "wasmer-runtime-core",
  "wasmer-singlepass-backend",
  "wasmer-wasi",
 ]
