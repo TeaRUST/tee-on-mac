@@ -147,14 +147,14 @@ use wasmer_middleware_common::metering;
 pub fn add(wasm_path: String, x: i64, y: i64) -> wasm_error::Result<i64> {
   let wasm_binary = std::fs::read(wasm_path).unwrap();
   let metering_instance = get_instance(&wasm_binary);
-  let rs = metering_instance.call("add", &[Value::I64(x), Value::I64(y)])?;
-
+  //let rs = metering_instance.call("add", &[Value::I64(x), Value::I64(y)])?;
+  let rs = metering_instance.call("main", &[])?;
   let gas = metering::get_points_used(&metering_instance);
 
-  let n = rs.get(0).unwrap().to_u128() as i64;
-  println!("wasm result: {} ||| gas: {}", n, gas);
+  //let n = rs.get(0).unwrap().to_u128() as i64;
+  println!(" gas: {}", gas);
 
-  Ok(n)
+  Ok(0)
 }
 
 fn main1(){

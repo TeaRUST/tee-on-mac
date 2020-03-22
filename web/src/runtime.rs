@@ -10,6 +10,11 @@ use wasmer_runtime_core::{
   codegen::{MiddlewareChain, StreamingCompiler},
 };
 use wasmer_middleware_common::metering::Metering;
+use wasmer_wasi::{
+  generate_import_object_for_version,
+  state::{self, WasiFile, WasiFsError},
+  types,
+};
 use std::vec::Vec;
 
 // use crate::crypto1::{a};
@@ -64,6 +69,7 @@ fn get_module(wasm: &Vec<u8>) -> Module {
   module
 }
 
+
 fn save_module(hash: WasmHash, module: Module) -> Result<(), wasm_error::CacheError>{
   use wasmer_runtime::cache::Cache;
   let mut fs_cache = unsafe {
@@ -76,16 +82,31 @@ fn save_module(hash: WasmHash, module: Module) -> Result<(), wasm_error::CacheEr
 }
 
 pub fn get_instance(wasm: &Vec<u8>) -> Instance {
-  let module = get_module(wasm);
-  
-  let import_object = imports! {
-    "env" => {
-      "print_str" => func!(print_str),
-    },
-  };
 
-  
-  let instance = module.instantiate(&import_object).unwrap();
+
+  let module = get_module(wasm);
+
+ // get the version of the WASI module in a non-strict way, meaning we're
+  // allowed to have extra imports
+  let wasi_version = wasmer_wasi::get_wasi_version(&module, false)
+      .expect("WASI version detected from Wasm module");
+
+  // WASI imports
+  let mut base_imports =
+      generate_import_object_for_version(wasi_version, vec![], vec![], vec![], vec![]);
+  // env is the default namespace for extern functions
+  let custom_imports = imports! {
+      "env" => {
+          "print_str" => func!(print_str)
+      },
+  };
+  // The WASI imports object contains all required import functions for a WASI module to run.
+  // Extend this imports with our custom imports containing "it_works" function so that our custom wasm code may run.
+  base_imports.extend(custom_imports);
+  let instance = module
+      .instantiate(&base_imports)
+      .expect("failed to instantiate wasm module");
+  //let instance = module.instantiate(&import_object).unwrap();
   
   instance
 }
