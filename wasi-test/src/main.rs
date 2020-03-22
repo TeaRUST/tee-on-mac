@@ -14,7 +14,9 @@ use std::vec::Vec;
 
 use wasmer_wasi::{
     is_wasi_module, generate_import_object, get_wasi_version, 
-    generate_import_object_for_version
+    generate_import_object_for_version,
+    state::{self, WasiFile, WasiFsError},
+    types
 };
 
 mod logging;
@@ -81,7 +83,7 @@ fn main() {
     let wasm_binary = std::fs::read("./demo/target/wasm32-wasi/debug/demo.wasm").unwrap();
     let instance = get_instance(&wasm_binary);
 
-    let entry_point = instance.func::<(i32), i32>("plugin_entrypoint").unwrap();
+    let entry_point : Func<(i32), i32> = instance.func("start").unwrap();
     let result = entry_point.call(2).expect("failed to execute plugin");
     println!("result: {}", result);
 }
