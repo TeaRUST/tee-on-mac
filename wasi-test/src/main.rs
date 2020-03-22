@@ -9,7 +9,10 @@ use wasmer_runtime_core::{
     backend::Compiler, 
     codegen::{MiddlewareChain, StreamingCompiler},
 };
-use wasmer_middleware_common::metering::Metering;
+use wasmer_middleware_common::{
+    metering,
+    metering::{Metering}
+};
 use std::vec::Vec;
 
 use wasmer_wasi::{
@@ -18,6 +21,8 @@ use wasmer_wasi::{
     state::{self, WasiFile, WasiFsError},
     types
 };
+
+use std::path::{PathBuf};
 
 mod logging;
 
@@ -29,7 +34,7 @@ fn get_compiler() -> impl Compiler {
     use wasmer_singlepass_backend::ModuleCodeGenerator as SinglePassMCG;
     let c: StreamingCompiler<SinglePassMCG, _, _, _, _> = StreamingCompiler::new(move || {
       let mut chain = MiddlewareChain::new();
-      chain.push(Metering::new(1000));
+      chain.push(Metering::new(99999));
       chain
     });
   
@@ -44,8 +49,8 @@ fn get_module(wasm: &Vec<u8>) -> Module {
     let hash = hasher.encode();
 
     
-    // let module = compile_with(&wasm, &compiler).unwrap();
-    let module = compile(&wasm).expect("compile error");
+    let module = compile_with(&wasm, &compiler).expect("compile error");
+    // let module = compile(&wasm).expect("compile error");
   
   
     let f = is_wasi_module(&module);
@@ -62,11 +67,22 @@ pub fn get_instance(wasm: &Vec<u8>) -> Instance {
     let wasi_version = get_wasi_version(&module, false).unwrap();
     println!("get_wasi_version : {:?}", wasi_version);
 
-    let mut base_imports = generate_import_object_for_version(wasi_version, vec![], vec![], vec![], vec![]);
+    let mut base_imports = generate_import_object_for_version(
+        wasi_version, 
+        vec!["jacky".as_bytes().to_vec(), b"hello world".to_vec()], 
+        vec![b"HOME".to_vec()], 
+        vec![
+            PathBuf::from("./asset/")
+        ], 
+        vec![
+            ("file".to_string(), PathBuf::from("./asset/"))
+        ]
+    );
 
     let custom_imports = imports! {
         "env" => {
             "it_works" => func!(it_works),
+            "open_file" => func!(open_file),
         },
     };
     
@@ -80,21 +96,41 @@ pub fn get_instance(wasm: &Vec<u8>) -> Instance {
 
 fn main() {
     println!("start");
-    let wasm_binary = std::fs::read("./demo/target/wasm32-wasi/debug/demo.wasm").unwrap();
+    let wasm_binary = std::fs::read("./demo/target/wasm32-wasi/release/demo.wasm").unwrap();
     let instance = get_instance(&wasm_binary);
 
     let entry_point : Func<(i32), i32> = instance.func("start").unwrap();
-    let result = entry_point.call(2).expect("failed to execute plugin");
-    println!("result: {}", result);
+    let result = entry_point.call(100).expect("failed to execute plugin");
+
+    let gas = metering::get_points_used(&instance);
+    println!("wasm result: {} ||| gas: {}", result, gas);
 }
   
 fn it_works(_ctx: &mut Ctx) -> i32 {
     println!("Hello from outside WASI");
     5
 }
+fn open_file(_ctx: &mut Ctx) -> i32 {
+    let state = unsafe { state::get_wasi_state(_ctx) };
+    // println!("state : {:?}", state);
 
-fn initialize(ctx: &mut Ctx) {
-    let state = unsafe { state::get_wasi_state(ctx) };
+    // let args = String::from_utf8(state.args.as_slice()).unwrap();
+    println!("state : {:?}", &"aa");
+
+    1
+}
+
+
+fn initialize(_ctx: &mut Ctx) {
+    let state = unsafe { state::get_wasi_state(_ctx) };
+
+    // state.args("ffffff");
+
+    // println!("{:?}, {:?}, {:?}", state.args, state.fs, state.envs);
+
+
+
+    
     let wasi_file_inner = LoggingWrapper {
         wasm_module_name: " WASM ".to_string(),
     };
