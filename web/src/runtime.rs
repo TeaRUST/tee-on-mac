@@ -1,6 +1,6 @@
 use wasmer_runtime::{
   error as wasm_error, func, imports, instantiate, Array, Ctx, WasmPtr, Func, Value,
-  compile_with, Instance, Module, 
+  compile_with, Instance, Module, compile,
   cache::{
     WasmHash, FileSystemCache
   }
@@ -50,8 +50,8 @@ fn get_module(wasm: &Vec<u8>) -> Module {
 
   }
   
-  let module = compile_with(&wasm, &compiler).unwrap();
-
+  //let module = compile_with(&wasm, &compiler).unwrap();
+	let module = compile(&wasm).expect("wasm compilation");
   // save module to cache
   {
     let mut mm = get_module_cache().try_lock().unwrap();

@@ -115,13 +115,13 @@ async fn upload_wasm(
   let cache = Cache.read().unwrap();
   println!("{:?}", cache.values());
 
-  let x = add(
-    cache.get("file").unwrap().to_string(),
-    cache.get("x").unwrap().parse::<i64>().unwrap(),
-    cache.get("y").unwrap().parse::<i64>().unwrap()
-  ).unwrap();
-  println!("result : {}", x);
-  
+  // let x = add(
+  //   cache.get("file").unwrap().to_string(),
+  //   cache.get("x").unwrap().parse::<i64>().unwrap(),
+  //   cache.get("y").unwrap().parse::<i64>().unwrap()
+  // ).unwrap();
+  // println!("result : {}", x);
+  let x = 0;
   Ok(HttpResponse::Ok().body(x.to_string()))
 }
 
@@ -141,17 +141,20 @@ use wasmer_runtime::{
 use wasmer_middleware_common::metering;
 
 
-pub fn add(wasm_path: String, x: i64, y: i64) -> wasm_error::Result<i64> {
+pub fn add(wasm_path: String, x: i32, y: i32){
   let wasm_binary = std::fs::read(wasm_path).unwrap();
   let metering_instance = get_instance(&wasm_binary);
-  let rs = metering_instance.call("add", &[Value::I64(x), Value::I64(y)])?;
-
+  //let rs = metering_instance.call("add", &[Value::I64(x), Value::I64(y)])?;
+  // get a reference to the function "plugin_entrypoint" which takes an i32 and returns an i32
+  let entry_point = metering_instance.func::<(i32, i32), i32>("plugin_entrypoint").unwrap();
+  // call the "entry_point" function in WebAssembly with the number "2" as the i32 argument
+  let result = entry_point.call(2,4).expect("failed to execute plugin");
   let gas = metering::get_points_used(&metering_instance);
 
-  let n = rs.get(0).unwrap().to_u128() as i64;
-  println!("wasm result: {} ||| gas: {}", n, gas);
+  //let n = rs.get(0).unwrap().to_u128() as i64;
+  println!("wasm result: {} ||| gas: {}", result, gas);
 
-  Ok(n)
+  
 }
 
 fn main(){
