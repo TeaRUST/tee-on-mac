@@ -1,6 +1,6 @@
 use wasmer_runtime::{
     error as wasm_error, func, imports, instantiate, Array, Ctx, WasmPtr, Func, Value,
-    compile_with, Instance, Module, 
+    compile_with, Instance, Module, compile,
     cache::{
       WasmHash, FileSystemCache
     }
@@ -9,6 +9,7 @@ use wasmer_runtime::{
     backend::Compiler, 
     codegen::{MiddlewareChain, StreamingCompiler},
   };
+  use wasmer_runtime_core::types::{GlobalInit, Initializer::Const, Value::I32};
   use wasmer_middleware_common::metering::Metering;
   use std::vec::Vec;
 
@@ -23,7 +24,7 @@ use wasmer_runtime::{
     use wasmer_singlepass_backend::ModuleCodeGenerator as SinglePassMCG;
     let c: StreamingCompiler<SinglePassMCG, _, _, _, _> = StreamingCompiler::new(move || {
       let mut chain = MiddlewareChain::new();
-      chain.push(Metering::new(1000));
+      chain.push(Metering::new(100000000));
       chain
     });
   
@@ -37,7 +38,8 @@ use wasmer_runtime::{
     let hasher = WasmHash::generate(&wasm);
     let hash = hasher.encode();
     
-    let module = compile_with(&wasm, &compiler).unwrap();
+    // let module = compile_with(&wasm, &compiler).unwrap();
+    let module = compile(&wasm).unwrap();
   
     let f = is_emscripten_module(&module);
     println!("is_emscripten_module ======> {:?}", f);
@@ -62,13 +64,25 @@ use wasmer_runtime::{
   }
 
   fn run_em(module: Module) -> Result<(), String>{
+    let max_idx = module.info().globals.iter().map(|(k, _)| k).max().unwrap();
+    if let (
+      GlobalInit {
+          init: Const(I32(dynamic_base)),
+          ..
+      }
+  ) = (
+      &module.info().globals[max_idx]
+  ) {
+    println!("module info : {:?} ====", &module.info().globals);
+  }
+    
+    
     let mut emscripten_globals = EmscriptenGlobals::new(&module).expect("");
     println!("222222222");
     let import_object = generate_emscripten_env(&mut emscripten_globals);
-    println!("111111111");
-    let mut instance = module
-        .instantiate(&import_object)
-        .map_err(|e| format!("Can't instantiate emscripten module: {:?}", e))?;
+    
+    let mut instance = module.instantiate(&import_object).unwrap();
+    println!("111111");
     println!("{:#?}", instance.context());
     run_emscripten_instance(
         &module,
