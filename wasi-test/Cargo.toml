@@ -10,3 +10,6 @@ wasmer-middleware-common = "0.16.2"
 wasmer-runtime-core = "0.16.2"
 wasmer-singlepass-backend = "0.16.2"
 wasmer-wasi = "0.16.2"
+
+serde = { version = "1", features = ["derive"] }
+typetag = "0.1"
