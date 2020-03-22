@@ -3,10 +3,10 @@ extern "C" {
 }
 
 #[no_mangle]
-pub fn plugin_entrypoint(n: i32) -> i32 {
+pub fn plugin_entrypoint(n: i32,m:i32) -> i32 {
   println!("Hello from inside WASI");
   let result = unsafe { it_works() };
-  result + n
+  result + n + m
 }
 
 pub fn main() {}
