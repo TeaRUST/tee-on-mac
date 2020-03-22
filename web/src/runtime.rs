@@ -6,13 +6,13 @@ use wasmer_runtime::{
   }
 };
 use wasmer_runtime_core::{
-  backend::Compiler, 
+  backend::Compiler, import::ImportObject,
   codegen::{MiddlewareChain, StreamingCompiler},
 };
 use wasmer_middleware_common::metering::Metering;
 use std::vec::Vec;
 
-use wasmer_wasi::{{is_wasi_module}};
+use wasmer_wasi::{generate_import_object_for_version, {is_wasi_module}};
 
 // use crate::crypto1::{a};
 
@@ -81,15 +81,40 @@ fn save_module(hash: WasmHash, module: Module) -> Result<(), wasm_error::CacheEr
 
 pub fn get_instance(wasm: &Vec<u8>) -> Instance {
   let module = get_module(wasm);
-  
-  let import_object = imports! {
+  let custom_import_object = imports! {
     "env" => {
-      "print_str" => func!(print_str),
+			"print_str" => func!(print_str),
+			"it_works" => func!(it_works),
+			
     },
   };
+  let import_object = handle_wasi_import(&module, custom_import_object);
 
   
   let instance = module.instantiate(&import_object).unwrap();
   
   instance
+}
+fn it_works(_ctx: &mut Ctx) -> i32 {
+	println!("Hello from outside WASI");
+	5
+}
+fn handle_wasi_import(module: &Module, custom_import_object: ImportObject) -> ImportObject{
+	if is_wasi_module(&module){
+		// get the version of the WASI module in a non-strict way, meaning we're
+    // allowed to have extra imports
+    let wasi_version = wasmer_wasi::get_wasi_version(&module, false)
+        .expect("WASI version detected from Wasm module");
+
+    // WASI imports
+    let mut base_imports =
+        generate_import_object_for_version(wasi_version, vec![], vec![], vec![], vec![]);
+    // The WASI imports object contains all required import functions for a WASI module to run.
+    // Extend this imports with our custom imports containing "it_works" function so that our custom wasm code may run.
+		base_imports.extend(custom_import_object);
+		base_imports
+	}
+	else{
+		custom_import_object
+	}
 }
