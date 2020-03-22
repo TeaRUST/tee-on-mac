@@ -7,10 +7,11 @@ edition = "2018"
 [dependencies]
 # request = { path="lib/request" }
 
-wasmer-runtime = "0.14.1"
-wasmer-middleware-common = "0.14.1"
-wasmer-runtime-core = "0.14.1"
-wasmer-singlepass-backend = "0.14.1"
+wasmer-runtime = "0.16.2"
+wasmer-middleware-common = "0.16.2"
+wasmer-runtime-core = "0.16.2"
+wasmer-singlepass-backend = "0.16.2"
+wasmer-wasi = "0.16.2"
 
 tonic = "0.1.1"
 prost = "0.6"

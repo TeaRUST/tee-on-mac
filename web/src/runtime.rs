@@ -12,6 +12,8 @@ use wasmer_runtime_core::{
 use wasmer_middleware_common::metering::Metering;
 use std::vec::Vec;
 
+use wasmer_wasi::{{is_wasi_module}};
+
 // use crate::crypto1::{a};
 
 use crate::crypto::{sha_256};
@@ -60,6 +62,8 @@ fn get_module(wasm: &Vec<u8>) -> Module {
 
   save_module(hasher, module.clone());
 
+  let f = is_wasi_module(&module);
+  println!("is_wasi_module : {}", f);
 
   module
 }

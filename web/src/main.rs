@@ -38,7 +38,7 @@ lazy_static! {
 
 
 #[actix_rt::main]
-pub async fn main() -> std::io::Result<()> {
+pub async fn main1() -> std::io::Result<()> {
 
   std::env::set_var("RUST_LOG", "actix_web=info");
   env_logger::init();
@@ -125,9 +125,6 @@ async fn upload_wasm(
   Ok(HttpResponse::Ok().body(x.to_string()))
 }
 
-async fn save_wasm_file() {
-
-}
 
 
 // runtime
@@ -157,10 +154,9 @@ pub fn add(wasm_path: String, x: i64, y: i64) -> wasm_error::Result<i64> {
   Ok(n)
 }
 
-fn main1(){
+fn main(){
   println!("start");
-  let wasm_path = String::from("./tmp/test.wasm");
-  add(wasm_path, 1, 20);
+
   add(String::from("./tmp/hello_world.wasm"), 1, 20);
 
   let mm = get_module_cache().lock().unwrap();
