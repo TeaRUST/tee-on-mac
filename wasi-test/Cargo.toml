@@ -5,11 +5,17 @@ edition = "2018"
 
 
 [dependencies]
-wasmer-runtime = "0.16.2"
-wasmer-middleware-common = "0.16.2"
-wasmer-runtime-core = "0.16.2"
-wasmer-singlepass-backend = "0.16.2"
-wasmer-wasi = "0.16.2"
+# wasmer-runtime = "0.16.2"
+# wasmer-middleware-common = "0.16.2"
+# wasmer-runtime-core = "0.16.2"
+# wasmer-singlepass-backend = "0.16.2"
+# wasmer-wasi = "0.16.2"
+
+wasmer-runtime = { path="../../wasmer/lib/runtime" }
+wasmer-middleware-common = { path="../../wasmer/lib/middleware-common" }
+wasmer-runtime-core = { path="../../wasmer/lib/runtime-core" }
+wasmer-singlepass-backend = { path="../../wasmer/lib/singlepass-backend" }
+wasmer-wasi = {path="../../wasmer/lib/wasi"}
 
 serde = { version = "1", features = ["derive"] }
 typetag = "0.1"
