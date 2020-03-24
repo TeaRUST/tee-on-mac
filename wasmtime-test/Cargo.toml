@@ -1,0 +1,12 @@
+[package]
+name = "wasmtime-test"
+version = "0.1.0"
+edition = "2018"
+
+
+[dependencies]
+wasmtime="0.12.0"
+wasmtime-wasi="0.12.0"
+wasi-common="0.12.0"
+
+anyhow="1.0.27"
