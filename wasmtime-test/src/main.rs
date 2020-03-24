@@ -1,7 +1,7 @@
 use anyhow::Result;
 use wasmtime::*;
-use wasmtime_wasi::{Wasi, WasiCtx, WasiCtxBuilder};
-use wasi_common::{preopen_dir};
+use wasmtime_wasi::{Wasi, WasiCtxBuilder};
+//use wasi_common::{preopen_dir};
 
 fn main() -> Result<()> {
     let store = Store::default();

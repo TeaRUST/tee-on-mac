@@ -21,7 +21,7 @@ fn main() {
         out.push(format!("{:?}", entry.unwrap().path()));
     }
     let file_path = "root/zzz.txt";
-    fs::write(file_path, b"sfdjlsfdls");
+    fs::write(file_path, b"sfdjlsfdls").unwrap();
     let c = fs::read_to_string(file_path).expect("no file");
     println!("content => {}", c);
 
