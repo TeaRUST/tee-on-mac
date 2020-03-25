@@ -1,6 +1,7 @@
 use std::env;
 use std::fs;
 
+use serde::{Serialize, Deserialize};
 fn main() {
 
     #[cfg(target_os = "wasi")]
@@ -32,6 +33,9 @@ fn main() {
 
     // println!("Hello, world11111!");
 }
-
+#[no_mangle]
+fn add(a:i32)->i32{
+    a + 1
+}
 #[no_mangle]
 fn func_1() {}

@@ -1,19 +1,36 @@
 use anyhow::Result;
 use wasmtime::*;
 use wasmtime_wasi::{Wasi, WasiCtxBuilder};
+use serde::{Serialize, Deserialize};
+use bincode;
 //use wasi_common::{preopen_dir};
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
+pub struct Point {
+    x : u8,
+    y : u8,
+}
+// impl AsRef<[u8]> for Point{
+//     fn as_ref(&self) -> &[u8] {
+//         let encoded = bincode::serialize(&self).unwrap();
+//             // &encoded.to_owned()
+//         &[0,1]
+//     }
+// } 
 
 fn main() -> Result<()> {
     let store = Store::default();
     let module = Module::from_file(&store, "demo/target/wasm32-wasi/debug/demo.wasm")?;
-    
+    //println!("encoded is {:?} ", encoded);
+    //let bytes_point = new_point.serialize::<Bytes>(new_point);
     println!("{:?}", std::fs::File::open("."));
     let wcb = {
         WasiCtxBuilder::new()
-        .arg("jacky")
         .env("HOME", "DIR")
         .preopened_dir(std::fs::File::open("asset")?, "root")
         .inherit_stdio()
+        //.inherit_env()
+        //.inherit_args()
+        .arg(bincode::serialize(&Point{x:1,y:2}).unwrap())
         .build().expect("error here")
     };
 
@@ -43,10 +60,10 @@ fn main() -> Result<()> {
     // standard wasi `_start` function.
     let instance = Instance::new(&module, &imports)?;
     let start = instance
-        .get_export("_start")
+        .get_export("add")
         .and_then(|e| e.func())
         .unwrap();
-    let start = start.get0::<()>()?;
-    start()?;
+    let add = start.get1::<i32,i32>()?;
+    let r = add(1)?;
     Ok(())
 }
