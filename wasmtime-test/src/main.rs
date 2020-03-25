@@ -11,7 +11,7 @@ pub struct Point {
 
 fn main() -> Result<()> {
     let store = Store::default();
-    let module = Module::from_file(&store, "demo/target/wasm32-wasi/debug/demo.wasm")?;
+    let module = Module::from_file(&store, "demo/target/wasm32-wasi/release/demo.wasm")?;
     println!("{:?}", std::fs::File::open("."));
     //debug_get_module_import_export_list(&module);
     let wcb = {

@@ -2,14 +2,23 @@ use std::env;
 use std::fs;
 
 use serde::{Serialize, Deserialize};
+use bincode;
 const WASM_MEMORY_BUFFER_SIZE2: u32 = 1024;
 static mut WASM_MEMORY_BUFFER2: [u8; WASM_MEMORY_BUFFER_SIZE2 as usize] = [0; WASM_MEMORY_BUFFER_SIZE2 as usize];
 const WASM_MEMORY_BUFFER_SIZE: u32 = 1024;
 static mut WASM_MEMORY_BUFFER: [u8; WASM_MEMORY_BUFFER_SIZE as usize] = [0; WASM_MEMORY_BUFFER_SIZE as usize];
-
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
+pub struct Point {
+    x : u8,
+    y : u8,
+}
 fn store_value_in_wasm_memory_buffer_buffer_index_zero(value: u8) {
+    let serialized_array = bincode::serialize(&Point{x:1,y:2}).unwrap();
     unsafe{
-        WASM_MEMORY_BUFFER[0] = value;
+        let serialized_array_ptr = serialized_array.as_ptr();
+        for i in 0..serialized_array.len(){
+            WASM_MEMORY_BUFFER[i] = *serialized_array_ptr.add(i);
+        }
     }
 }
 #[no_mangle]
@@ -31,6 +40,10 @@ fn read_wasm_memory_buffer_and_return_index_one() -> u8 {
       value = WASM_MEMORY_BUFFER[1];
     }
     value
+}
+ 
+fn deserilize_and_print_point(ptr: i32){
+
 }
 
 fn main() {
@@ -72,7 +85,7 @@ fn orig(a:i32)->i32{
 #[no_mangle]
 fn add(a:i32)->i32{
     //a + 1
-    store_value_in_wasm_memory_buffer_buffer_index_zero(8);
+    store_value_in_wasm_memory_buffer_buffer_index_zero(0);
     get_wasm_memory_buffer_pointer() as i32
 }
 #[no_mangle]
