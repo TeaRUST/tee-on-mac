@@ -61,17 +61,36 @@ fn main() -> Result<()> {
     let instance = Instance::new(&module, &imports)?;
     for ex in instance.exports(){
         
-        println!("ex is a {:?}", ex.ty());
+        //println!("ex is a {:?}", ex.ty());
         if let Some(func) = ex.func(){
-        println!("exports type is {:?}", ex.ty());
-            println!("ex is a func {:?}", func);
+            //println!("exports type is {:?}", ex.ty());
+            //println!("ex is a func {:?}", func);
         }
         if let Some(global) = ex.global(){
         }
         if let Some(table) = ex.table(){
         }
         if let Some(mem) = ex.memory(){ 
-           println!("ex memory data_ptr, data_size size is {:?}, {:?}, {:?}", mem.data_ptr(), mem.data_size(), mem.size());
+            unsafe{
+                //println!("unsafe data {:?}", mem.data_unchecked());
+            }
+            println!("ex memory data_ptr, data_size size is {:?}, {:?}, {:?}", mem.data_ptr(), mem.data_size(), mem.size());
+        }
+    }
+    let start = instance
+        .get_export("orig")
+        .and_then(|e| e.func())
+        .unwrap();
+    let orig = start.get1::<i32,i32>()?;
+    let r = orig(1)? as usize;
+    println!("output of orig: {}", r);
+    for ex in instance.exports(){
+        if let Some(mem) = ex.memory(){
+            unsafe{
+                let mem_array: &[u8] = mem.data_unchecked();
+                println!("first 3 cell in u8 array are: {}, {}, {}", mem_array[r], mem_array[r + 1], mem_array[r + 2]);
+            }
+            println!("ex memory data_ptr, data_size size is {:?}, {:?}, {:?}", mem.data_ptr(), mem.data_size(), mem.size());
         }
     }
     let start = instance
@@ -79,7 +98,16 @@ fn main() -> Result<()> {
         .and_then(|e| e.func())
         .unwrap();
     let add = start.get1::<i32,i32>()?;
-    let r = add(1)?;
+    let r = add(1)? as usize;
     println!("output of add: {}", r);
+    for ex in instance.exports(){
+        if let Some(mem) = ex.memory(){
+            unsafe{
+                let mem_array: &[u8] = mem.data_unchecked();
+                println!("first 3 cell in u8 array are: {}, {}, {}", mem_array[r], mem_array[r + 1], mem_array[r + 2]);
+            }
+            println!("ex memory data_ptr, data_size size is {:?}, {:?}, {:?}", mem.data_ptr(), mem.data_size(), mem.size());
+        }
+    }
     Ok(())
 }
