@@ -12,8 +12,10 @@ pub struct Point {
 fn main() -> Result<()> {
     let store = Store::default();
     let module = Module::from_file(&store, "demo/target/wasm32-wasi/release/demo.wasm")?;
+    #[cfg(feature = "verbose")]
     println!("{:?}", std::fs::File::open("."));
-    //debug_get_module_import_export_list(&module);
+    #[cfg(feature = "verbose")]
+    debug_get_module_import_export_list(&module);
     let wcb = {
         WasiCtxBuilder::new()
         .env("HOME", "DIR")
@@ -43,40 +45,63 @@ fn main() -> Result<()> {
     // Instance our module with the imports we've created, then we can run the
     // standard wasi `_start` function.
     let instance = Instance::new(&module, &imports)?;
-    let start = instance
-        .get_export("orig")
+    let begin_transfer_into_wasm = instance
+        .get_export("begin_transfer_into_wasm")
         .and_then(|e| e.func())
-        .unwrap();
-    let orig = start.get1::<i32,i32>()?;
-    let r = orig(1)? as usize;
-    println!("output of orig: {}", r);
+        .unwrap()
+        .get0::<i32>()?;
+    
+    let mem = instance.get_export("memory").unwrap().memory().unwrap();
+    let mut mem_array: &mut [u8];
+    unsafe{
+        mem_array = mem.data_unchecked_mut();
+    }
+    let wasm_in_mem_buffer_offset = begin_transfer_into_wasm().unwrap();
+    let point = Point{x:3,y:4};
+    let serialzied_size = bincode::serialized_size(&point).unwrap() as u32;
+    let serialized_array = bincode::serialize(&point).unwrap();
+    unsafe{
+        for i in 0..serialzied_size{
+          mem_array[wasm_in_mem_buffer_offset as usize + i as usize ] = serialized_array[i as usize];
+        }
+    }
+    
+    let end_transfer_into_wasm = instance
+    .get_export("end_transfer_into_wasm")
+    .and_then(|e| e.func())
+    .unwrap()
+    .get1::<i32, i32>()?;
+    
+    end_transfer_into_wasm(serialzied_size as i32);
+
+    let do_compute = instance
+        .get_export("do_compute")
+        .and_then(|e| e.func())
+        .unwrap()
+        .get0::<i32>()?;
+    do_compute();
+
     let mem = instance.get_export("memory").unwrap().memory().unwrap();
 
+    let transfer_out = instance
+        .get_export("transfer_out_from_wasm")
+        .and_then(|e| e.func())
+        .unwrap()
+        .get0::<i32>()?;
+    let r = transfer_out()? as usize;
+    println!("output of trasnfer out: {}", r);
     let mut mem_array: &[u8];
     unsafe{
         mem_array = mem.data_unchecked();
     }
-    println!("first 3 cell in u8 array are: {}, {}, {}", mem_array[r], mem_array[r + 1], mem_array[r + 2]);
-    println!("ex memory data_ptr, data_size size is {:?}, {:?}, {:?}", mem.data_ptr(), mem.data_size(), mem.size());
-    let start = instance
-        .get_export("add")
-        .and_then(|e| e.func())
-        .unwrap();
-    let add = start.get1::<i32,i32>()?;
-    let r = add(1)? as usize;
-    println!("output of add: {}", r);
-    unsafe{
-        mem_array = mem.data_unchecked();
-    }
-    println!("first 3 cell in u8 array are: {}, {}, {}", mem_array[r], mem_array[r + 1], mem_array[r + 2]);
-    println!("ex memory data_ptr, data_size size is {:?}, {:?}, {:?}", mem.data_ptr(), mem.data_size(), mem.size());
-
+    let point_from_wasm: Point = bincode::deserialize(&mem_array[r..]).unwrap();
+    println!("point from wasm is {:?}", point_from_wasm);
     Ok(())
 }
-fn debug_get_module_import_export_list(module: &Module){
-
+#[cfg(feature = "verbose")]
+fn _debug_get_module_import_export_list(module: &Module){
     for import in module.imports(){
-        println!("in module importType.name: {:?}", import.name());
+        println!(":wasi_commonin module importType.name: {:?}", import.name());
     }
     for export in module.exports(){
         println!("in module exportType.name : {:?}", export.name());

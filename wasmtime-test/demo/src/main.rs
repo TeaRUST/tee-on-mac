@@ -3,47 +3,55 @@ use std::fs;
 
 use serde::{Serialize, Deserialize};
 use bincode;
-const WASM_MEMORY_BUFFER_SIZE2: u32 = 1024;
-static mut WASM_MEMORY_BUFFER2: [u8; WASM_MEMORY_BUFFER_SIZE2 as usize] = [0; WASM_MEMORY_BUFFER_SIZE2 as usize];
-const WASM_MEMORY_BUFFER_SIZE: u32 = 1024;
-static mut WASM_MEMORY_BUFFER: [u8; WASM_MEMORY_BUFFER_SIZE as usize] = [0; WASM_MEMORY_BUFFER_SIZE as usize];
+
+//We create two memory buffers. One for the input value from the runtime host
+//Another is for the output value to the runtime host
+const IN_WASM_MEMORY_BUFFER_SIZE: u32 = 1024;
+static mut IN_WASM_MEMORY_BUFFER: [u8; IN_WASM_MEMORY_BUFFER_SIZE as usize] = [0; IN_WASM_MEMORY_BUFFER_SIZE as usize];
+const OUT_WASM_MEMORY_BUFFER_SIZE: u32 = 1024;
+static mut OUT_WASM_MEMORY_BUFFER: [u8; OUT_WASM_MEMORY_BUFFER_SIZE as usize] = [0; OUT_WASM_MEMORY_BUFFER_SIZE as usize];
+
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct Point {
     x : u8,
     y : u8,
 }
-fn store_value_in_wasm_memory_buffer_buffer_index_zero(value: u8) {
-    let serialized_array = bincode::serialize(&Point{x:1,y:2}).unwrap();
+fn store_value_to_out_wasm_memory_buffer(value: u8) 
+    -> u32 {
+    let point = Point{x:1,y:2};
+    let serialzied_size = bincode::serialized_size(&point).unwrap() as u32;
+    let serialized_array = bincode::serialize(&point).unwrap();
     unsafe{
         let serialized_array_ptr = serialized_array.as_ptr();
         for i in 0..serialized_array.len(){
-            WASM_MEMORY_BUFFER[i] = *serialized_array_ptr.add(i);
+            OUT_WASM_MEMORY_BUFFER[i] = *serialized_array_ptr.add(i);
         }
     }
+    serialzied_size
 }
-#[no_mangle]
-pub fn get_wasm_memory_buffer_pointer() -> *const u8 {
+fn get_in_wasm_memory_buffer_pointer() -> *const u8 {
     let pointer: *const u8;
     unsafe{
-        pointer = WASM_MEMORY_BUFFER.as_ptr();
+        pointer = IN_WASM_MEMORY_BUFFER.as_ptr();
     }
     pointer
 }
-#[no_mangle]
-pub fn get_wasm_memory_buffer_size() -> u32 {
-    WASM_MEMORY_BUFFER_SIZE 
-}
 
-fn read_wasm_memory_buffer_and_return_index_one() -> u8 {
-    let value: u8;
-    unsafe {
-      value = WASM_MEMORY_BUFFER[1];
+fn get_out_wasm_memory_buffer_pointer() -> *const u8 {
+    let pointer: *const u8;
+    unsafe{
+        pointer = OUT_WASM_MEMORY_BUFFER.as_ptr();
     }
-    value
+    pointer
 }
- 
-fn deserilize_and_print_point(ptr: i32){
 
+fn deserilize_and_print_point(ptr: i32){
+    unsafe{
+        let point_from_runtime_host: Point = bincode::deserialize(&IN_WASM_MEMORY_BUFFER[0..]).unwrap();
+        println!("point from runtime host is {:?}", point_from_runtime_host);
+
+    }
+    
 }
 
 fn main() {
@@ -77,16 +85,24 @@ fn main() {
 
     // println!("Hello, world11111!");
 }
+
 #[no_mangle]
-fn orig(a:i32)->i32{
-    //a + 1
-    get_wasm_memory_buffer_pointer() as i32
+fn begin_transfer_into_wasm() -> i32{
+    get_in_wasm_memory_buffer_pointer() as i32
+}
+
+#[no_mangle]
+fn end_transfer_into_wasm(size: i32)->i32{
+    deserilize_and_print_point(size);
+    0
 }
 #[no_mangle]
-fn add(a:i32)->i32{
-    //a + 1
-    store_value_in_wasm_memory_buffer_buffer_index_zero(0);
-    get_wasm_memory_buffer_pointer() as i32
+fn do_compute()->i32{
+    store_value_to_out_wasm_memory_buffer(0) as i32
+
 }
+
 #[no_mangle]
-fn func_1() {}
+fn transfer_out_from_wasm() -> i32{
+    get_out_wasm_memory_buffer_pointer() as i32 
+}
