@@ -2,10 +2,12 @@ use std::env;
 use std::fs;
 
 use serde::{Serialize, Deserialize};
-const WASM_MEMORY_BUFFER_SIZE: usize = 2;
-static mut WASM_MEMORY_BUFFER: [u8; WASM_MEMORY_BUFFER_SIZE] = [0; WASM_MEMORY_BUFFER_SIZE];
-#[no_mangle]
-pub fn store_value_in_wasm_memory_buffer_buffer_index_zero(value: u8) {
+const WASM_MEMORY_BUFFER_SIZE2: u32 = 1024;
+static mut WASM_MEMORY_BUFFER2: [u8; WASM_MEMORY_BUFFER_SIZE2 as usize] = [0; WASM_MEMORY_BUFFER_SIZE2 as usize];
+const WASM_MEMORY_BUFFER_SIZE: u32 = 1024;
+static mut WASM_MEMORY_BUFFER: [u8; WASM_MEMORY_BUFFER_SIZE as usize] = [0; WASM_MEMORY_BUFFER_SIZE as usize];
+
+fn store_value_in_wasm_memory_buffer_buffer_index_zero(value: u8) {
     unsafe{
         WASM_MEMORY_BUFFER[0] = value;
     }
@@ -19,7 +21,11 @@ pub fn get_wasm_memory_buffer_pointer() -> *const u8 {
     pointer
 }
 #[no_mangle]
-pub fn read_wasm_memory_buffer_and_return_index_one() -> u8 {
+pub fn get_wasm_memory_buffer_size() -> u32 {
+    WASM_MEMORY_BUFFER_SIZE 
+}
+
+fn read_wasm_memory_buffer_and_return_index_one() -> u8 {
     let value: u8;
     unsafe {
       value = WASM_MEMORY_BUFFER[1];
