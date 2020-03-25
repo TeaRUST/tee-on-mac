@@ -70,7 +70,8 @@ fn main() -> Result<()> {
         }
         if let Some(table) = ex.table(){
         }
-        if let Some(mem) = ex.memory(){
+        if let Some(mem) = ex.memory(){ 
+           println!("ex memory data_ptr, data_size size is {:?}, {:?}, {:?}", mem.data_ptr(), mem.data_size(), mem.size());
         }
     }
     let start = instance
