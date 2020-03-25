@@ -12,13 +12,8 @@ pub struct Point {
 fn main() -> Result<()> {
     let store = Store::default();
     let module = Module::from_file(&store, "demo/target/wasm32-wasi/debug/demo.wasm")?;
-    for import in module.imports(){
-        println!("in module importType.name: {:?}", import.name());
-    }
-    for export in module.exports(){
-        println!("in module exportType.name : {:?}", export.name());
-    }
     println!("{:?}", std::fs::File::open("."));
+    //debug_get_module_import_export_list(&module);
     let wcb = {
         WasiCtxBuilder::new()
         .env("HOME", "DIR")
@@ -77,4 +72,13 @@ fn main() -> Result<()> {
     println!("ex memory data_ptr, data_size size is {:?}, {:?}, {:?}", mem.data_ptr(), mem.data_size(), mem.size());
 
     Ok(())
+}
+fn debug_get_module_import_export_list(module: &Module){
+
+    for import in module.imports(){
+        println!("in module importType.name: {:?}", import.name());
+    }
+    for export in module.exports(){
+        println!("in module exportType.name : {:?}", export.name());
+    }
 }
