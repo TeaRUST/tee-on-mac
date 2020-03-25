@@ -59,11 +59,26 @@ fn main() -> Result<()> {
     // Instance our module with the imports we've created, then we can run the
     // standard wasi `_start` function.
     let instance = Instance::new(&module, &imports)?;
+    for ex in instance.exports(){
+        
+        println!("ex is a {:?}", ex.ty());
+        if let Some(func) = ex.func(){
+        println!("exports type is {:?}", ex.ty());
+            println!("ex is a func {:?}", func);
+        }
+        if let Some(global) = ex.global(){
+        }
+        if let Some(table) = ex.table(){
+        }
+        if let Some(mem) = ex.memory(){
+        }
+    }
     let start = instance
         .get_export("add")
         .and_then(|e| e.func())
         .unwrap();
     let add = start.get1::<i32,i32>()?;
     let r = add(1)?;
+    println!("output of add: {}", r);
     Ok(())
 }
