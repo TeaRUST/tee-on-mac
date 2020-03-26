@@ -42,8 +42,6 @@ fn main() -> Result<()> {
         );
     }
 
-    // Instance our module with the imports we've created, then we can run the
-    // standard wasi `_start` function.
     let instance = Instance::new(&module, &imports)?;
     let begin_transfer_into_wasm = instance
         .get_export("begin_transfer_into_wasm")
@@ -52,7 +50,7 @@ fn main() -> Result<()> {
         .get0::<i32>()?;
     
     let mem = instance.get_export("memory").unwrap().memory().unwrap();
-    let mut mem_array: &mut [u8];
+    let mem_array: &mut [u8];
     unsafe{
         mem_array = mem.data_unchecked_mut();
     }
@@ -60,10 +58,8 @@ fn main() -> Result<()> {
     let point = Point{x:3,y:4};
     let serialzied_size = bincode::serialized_size(&point).unwrap() as u32;
     let serialized_array = bincode::serialize(&point).unwrap();
-    unsafe{
-        for i in 0..serialzied_size{
-          mem_array[wasm_in_mem_buffer_offset as usize + i as usize ] = serialized_array[i as usize];
-        }
+    for i in 0..serialzied_size{
+        mem_array[wasm_in_mem_buffer_offset as usize + i as usize ] = serialized_array[i as usize];
     }
     
     let end_transfer_into_wasm = instance
@@ -72,14 +68,14 @@ fn main() -> Result<()> {
     .unwrap()
     .get1::<i32, i32>()?;
     
-    end_transfer_into_wasm(serialzied_size as i32);
+    end_transfer_into_wasm(serialzied_size as i32)?;
 
     let do_compute = instance
         .get_export("do_compute")
         .and_then(|e| e.func())
         .unwrap()
         .get0::<i32>()?;
-    do_compute();
+    do_compute()?;
 
     let mem = instance.get_export("memory").unwrap().memory().unwrap();
 
@@ -89,8 +85,8 @@ fn main() -> Result<()> {
         .unwrap()
         .get0::<i32>()?;
     let r = transfer_out()? as usize;
-    println!("output of trasnfer out: {}", r);
-    let mut mem_array: &[u8];
+
+    let mem_array: &[u8];
     unsafe{
         mem_array = mem.data_unchecked();
     }

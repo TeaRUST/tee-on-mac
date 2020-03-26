@@ -16,11 +16,11 @@ pub struct Point {
     x : u8,
     y : u8,
 }
-fn store_value_to_out_wasm_memory_buffer(value: u8) 
-    -> u32 {
-    let point = Point{x:1,y:2};
-    let serialzied_size = bincode::serialized_size(&point).unwrap() as u32;
-    let serialized_array = bincode::serialize(&point).unwrap();
+fn store_value_to_out_wasm_memory_buffer<T>(value: &T) 
+    -> u32 where T: Serialize{
+    
+    let serialzied_size = bincode::serialized_size(value).unwrap() as u32;
+    let serialized_array = bincode::serialize(value).unwrap();
     unsafe{
         let serialized_array_ptr = serialized_array.as_ptr();
         for i in 0..serialized_array.len(){
@@ -44,14 +44,13 @@ fn get_out_wasm_memory_buffer_pointer() -> *const u8 {
     }
     pointer
 }
-
-fn deserilize_and_print_point(ptr: i32){
+ 
+fn deserilize_and_print_point(ptr: i32, size: i32){
     unsafe{
-        let point_from_runtime_host: Point = bincode::deserialize(&IN_WASM_MEMORY_BUFFER[0..]).unwrap();
+        let point_from_runtime_host: Point = bincode::deserialize(&IN_WASM_MEMORY_BUFFER[ptr as usize ..]).unwrap();
+        println!("input data size is {}", size);
         println!("point from runtime host is {:?}", point_from_runtime_host);
-
     }
-    
 }
 
 fn main() {
@@ -93,12 +92,12 @@ fn begin_transfer_into_wasm() -> i32{
 
 #[no_mangle]
 fn end_transfer_into_wasm(size: i32)->i32{
-    deserilize_and_print_point(size);
+    deserilize_and_print_point(0, size);
     0
 }
 #[no_mangle]
 fn do_compute()->i32{
-    store_value_to_out_wasm_memory_buffer(0) as i32
+    store_value_to_out_wasm_memory_buffer(&Point{x:1,y:2}) as i32
 
 }
 
