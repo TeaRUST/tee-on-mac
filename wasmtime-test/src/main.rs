@@ -15,7 +15,7 @@ fn main() -> Result<()> {
     #[cfg(feature = "verbose")]
     println!("{:?}", std::fs::File::open("."));
     #[cfg(feature = "verbose")]
-    debug_get_module_import_export_list(&module);
+    _debug_get_module_import_export_list(&module);
     let wcb = {
         WasiCtxBuilder::new()
         .env("HOME", "DIR")
