@@ -35,7 +35,23 @@ fn main() -> Result<()> {
                 continue;
             }
         }
-        panic!(
+        else if import.module() == "env" {
+            if import.name() == "say" {
+                let say_func = Func::wrap0(&module.store(), ||{println!("hi there, I supposed to be say function")});
+    
+                imports.push(Extern::from(say_func));
+                continue;
+            }
+            else if import.name() == "say_somethingelse" {
+                let say_func_else = Func::wrap0(&module.store(), ||{println!("hi there, I supposed to be say something else function")});
+                imports.push(Extern::from(say_func_else));
+                continue;
+            }
+            else{
+                panic!("Found unresolved import function! {}:{}", import.module(), import.name());
+            }
+        }
+        println!(
             "couldn't find import for `{}::{}`",
             import.module(),
             import.name()

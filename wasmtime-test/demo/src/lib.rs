@@ -10,7 +10,14 @@ const IN_WASM_MEMORY_BUFFER_SIZE: u32 = 1024;
 static mut IN_WASM_MEMORY_BUFFER: [u8; IN_WASM_MEMORY_BUFFER_SIZE as usize] = [0; IN_WASM_MEMORY_BUFFER_SIZE as usize];
 const OUT_WASM_MEMORY_BUFFER_SIZE: u32 = 1024;
 static mut OUT_WASM_MEMORY_BUFFER: [u8; OUT_WASM_MEMORY_BUFFER_SIZE as usize] = [0; OUT_WASM_MEMORY_BUFFER_SIZE as usize];
-
+#[no_mangle]
+extern "C"{
+    fn say();
+}
+#[no_mangle]
+extern "C"{
+    fn say_somethingelse();
+}
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct Point {
     x : u8,
@@ -53,7 +60,8 @@ fn deserilize_and_print_point(ptr: i32, size: i32){
     }
 }
 
-fn main() {
+
+fn _start() {
 
     #[cfg(target_os = "wasi")]
     println!("aaaaaaaaaaaa");
@@ -97,6 +105,10 @@ fn end_transfer_into_wasm(size: i32)->i32{
 }
 #[no_mangle]
 fn do_compute()->i32{
+    unsafe{
+        say();
+        say_somethingelse();
+    }
     store_value_to_out_wasm_memory_buffer(&Point{x:1,y:2}) as i32
 
 }
@@ -104,4 +116,12 @@ fn do_compute()->i32{
 #[no_mangle]
 fn transfer_out_from_wasm() -> i32{
     get_out_wasm_memory_buffer_pointer() as i32 
+}
+
+
+#[no_mangle]
+fn use_import(){
+    unsafe{
+        say();
+    }
 }
