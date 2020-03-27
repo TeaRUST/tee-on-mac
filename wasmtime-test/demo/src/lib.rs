@@ -12,11 +12,11 @@ const OUT_WASM_MEMORY_BUFFER_SIZE: u32 = 1024;
 static mut OUT_WASM_MEMORY_BUFFER: [u8; OUT_WASM_MEMORY_BUFFER_SIZE as usize] = [0; OUT_WASM_MEMORY_BUFFER_SIZE as usize];
 #[no_mangle]
 extern "C"{
-    fn say();
+    fn wasm_binio_serilaize(ptr:i32, length:i32)->i32;
 }
 #[no_mangle]
 extern "C"{
-    fn say_somethingelse();
+    fn wasm_binio_deserialize(ptr:i32, length:i32)->i32;
 }
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct Point {
@@ -36,21 +36,14 @@ fn store_value_to_out_wasm_memory_buffer<T>(value: &T)
     }
     serialzied_size
 }
-fn get_in_wasm_memory_buffer_pointer() -> *const u8 {
-    let pointer: *const u8;
-    unsafe{
-        pointer = IN_WASM_MEMORY_BUFFER.as_ptr();
-    }
-    pointer
-}
 
-fn get_out_wasm_memory_buffer_pointer() -> *const u8 {
-    let pointer: *const u8;
-    unsafe{
-        pointer = OUT_WASM_MEMORY_BUFFER.as_ptr();
+    fn get_out_wasm_memory_buffer_pointer() -> *const u8 {
+        let pointer: *const u8;
+        unsafe{
+            pointer = OUT_WASM_MEMORY_BUFFER.as_ptr();
+        }
+        pointer
     }
-    pointer
-}
  
 fn deserilize_and_print_point(ptr: i32, size: i32){
     unsafe{
@@ -93,35 +86,29 @@ fn _start() {
     // println!("Hello, world11111!");
 }
 
-#[no_mangle]
-fn begin_transfer_into_wasm() -> i32{
-    get_in_wasm_memory_buffer_pointer() as i32
-}
+// #[no_mangle]
+// fn begin_transfer_into_wasm() -> i32{
+//     get_in_wasm_memory_buffer_pointer() as i32
+// }
 
+// #[no_mangle]
+// fn end_transfer_into_wasm(size: i32)->i32{
+//     deserilize_and_print_point(0, size);
+//     0
+// }
 #[no_mangle]
-fn end_transfer_into_wasm(size: i32)->i32{
-    deserilize_and_print_point(0, size);
-    0
-}
-#[no_mangle]
-fn do_compute()->i32{
-    unsafe{
-        say();
-        say_somethingelse();
+fn do_compute(buffer_size: i32)->i32{
+    let buffer : Vec<u8> = Vec::with_capacity(buffer_size as usize);
+
+    unsafe{ 
+        println!("call host serilzaise returns {}", wasm_binio_serilaize(buffer.as_ptr() as i32, buffer_size));
+        println!("call host deserilzaise returns {}", wasm_binio_deserialize(3,4));
     }
     store_value_to_out_wasm_memory_buffer(&Point{x:1,y:2}) as i32
 
 }
 
-#[no_mangle]
-fn transfer_out_from_wasm() -> i32{
-    get_out_wasm_memory_buffer_pointer() as i32 
-}
-
-
-#[no_mangle]
-fn use_import(){
-    unsafe{
-        say();
-    }
-}
+// #[no_mangle]
+// fn transfer_out_from_wasm() -> i32{
+//     get_out_wasm_memory_buffer_pointer() as i32 
+// }
