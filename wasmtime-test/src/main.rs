@@ -1,8 +1,14 @@
 use anyhow::Result;
-use wasmtime::*;
+use wasmtime::{
+    Module, Func, Caller, Instance, Extern,
+    Store, Engine, Config
+};
+
 use wasmtime_wasi::{Wasi, WasiCtxBuilder};
 use serde::{Serialize, Deserialize};
 use bincode;
+
+
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct Point {
     x : u8,
@@ -10,7 +16,8 @@ pub struct Point {
 }
 
 fn main() -> Result<()> {
-    let store = Store::default();
+    let engine = Engine::new(Config::new().wasm_multi_value(true));
+    let store = Store::new(&engine);
     let module = Module::from_file(&store, "demo/target/wasm32-wasi/release/demo.wasm")?;
     #[cfg(feature = "verbose")]
     println!("{:?}", std::fs::File::open("."));
@@ -45,12 +52,32 @@ fn main() -> Result<()> {
             "env" => {
                 match import.name(){
                     "say" => {
-                        let say_func = Func::wrap0(&module.store(), ||{println!("hi there, I supposed to be say function")});
+                        let say_func = Func::wrap(&module.store(), |caller: Caller|{
+
+                            #[cfg(feature = "verbose")]
+                            println!("=== {:?}", caller.get_export("memory").unwrap().memory().unwrap().ty());
+                            
+                            // println!("=== {:?}", caller.get_export("func").unwrap().func().unwrap().ty());
+
+                            println!("hi there, I supposed to be say function")
+                        });
+                        // let callback_type = FuncType::new(
+                        //     Box::new([]),
+                        //     Box::new([]),
+                        // );
+                        // let say_func = Func::new(&module.store(), callback_type, |_, args, _| {
+                        //     println!("> {:?}", args);
+                        //     println!("hi there, I supposed to be say function")
+
+                            
+                        // });
+
             
                         imports.push(Extern::from(say_func));
+                        // imports.push(say_func.into());
                     },
                     "say_somethingelse" => {
-                        let say_func_else = Func::wrap0(&module.store(), ||{println!("hi there, I supposed to be say something else function")});
+                        let say_func_else = Func::wrap(&module.store(), ||{println!("hi there, I supposed to be say something else function")});
                         imports.push(Extern::from(say_func_else));
                     },
                     _default => {
@@ -129,4 +156,9 @@ fn _debug_get_module_import_export_list(module: &Module){
     for export in module.exports(){
         println!("in module exportType.name : {:?}", export.name());
     }
+}
+
+
+fn test(){
+    println!("aaaaaaa");
 }

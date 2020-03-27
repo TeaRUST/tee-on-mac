@@ -5,9 +5,14 @@ edition = "2018"
 
 
 [dependencies]
-wasmtime="0.12.0"
-wasmtime-wasi="0.12.0"
-wasi-common="0.12.0"
+wasmtime="0.13.0"
+wasmtime-wasi="0.13.0"
+wasi-common="0.13.0"
+
+# wasmtime={path="../../wasmtime/crates/api"}
+# wasmtime-wasi={path="../../wasmtime/crates/wasi"}
+# wasi-common={path="../../wasmtime/crates/wasi-common"}
+
 serde = { version = "1.0", features = ["derive"] }
 anyhow="1.0.27"
 bincode = "1.2.1"
