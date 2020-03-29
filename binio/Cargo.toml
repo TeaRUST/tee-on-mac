@@ -1,13 +1,12 @@
 [package]
-name = "demo"
+name = "binio"
 version = "0.1.0"
-authors = ["jacky.li <jacky.li@accenture.com>"]
+authors = ["kevingzhang <kevin.zhang.canada@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[lib]
-crate-type = ['cdylib']
-
 [dependencies]
-binio-wasm = { path ="../../binio-wasm"}
+serde = { version = "1.0", features = ["derive"] }
+bincode = "1.0.0"
+wasmtime="0.13.0"

@@ -5,13 +5,12 @@ edition = "2018"
 
 
 [dependencies]
-wasmtime="0.12.0"
-wasmtime-wasi="0.12.0"
-wasi-common="0.12.0"
-serde = { version = "1.0", features = ["derive"] }
+wasmtime="0.13.0"
+wasmtime-wasi="0.13.0"
+wasi-common="0.13.0"
 anyhow="1.0.27"
-bincode = "1.2.1"
-
+binio = { path ="../binio"}
+serde = { version = "1.0", features = ["derive"] }
 [features]
 default=[]
 verbose=[]

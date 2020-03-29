@@ -1,16 +1,14 @@
 use anyhow::Result;
 use wasmtime::*;
-use wasmtime_wasi::{Wasi, WasiCtxBuilder, WasiCtx};
+use wasmtime_wasi::{Wasi, WasiCtxBuilder};
+use binio;
 use serde::{Serialize, Deserialize};
-use bincode;
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)] 
 pub struct Point {
-    x : u8,
-    y : u8,
+    x: i32,
+    y: i32,
 }
-
 fn main() -> Result<()> {
-    let point = Point{x:3,y:4};
     let store = Store::default();
     let module = Module::from_file(&store, "demo/target/wasm32-wasi/release/demo.wasm")?;
     #[cfg(feature = "verbose")]
@@ -26,7 +24,6 @@ fn main() -> Result<()> {
     };
 
     let wasi = Wasi::new(&store, wcb);
-    let mut binio = Wasm_binio_serilaize{instance : None}; 
     let mut imports = Vec::new();
     for import in module.imports() {
         match import.module(){
@@ -49,11 +46,14 @@ fn main() -> Result<()> {
                             Box::new([ValType::I32, ValType::I32]),
                             Box::new([ValType::I32])
                         );
-                        let wasm_binio_serilaize_function : Func = Func::new(&module.store(), func_type, std::rc::Rc::new(binio));
+                        let wasm_binio_serilaize_function : Func = Func::wrap(&module.store(), |caller: Caller, ptr: i32, len: i32 | -> i32 {
+                            println!("inside");
+                            1
+                        });
                         imports.push(Extern::from(wasm_binio_serilaize_function));
                     },
                     "wasm_binio_deserialize" => {
-                        imports.push(Extern::from(Func::wrap2(&module.store(), | ptr: i32, len:i32| wasm_binio_deserilaize(ptr, len))));
+                        imports.push(Extern::from(Func::wrap(&module.store(), | caller: Caller, cptr: i32, len:i32|->i32 {0})));
                     },
                     _default => {
                         panic!("Found unresolved import function! {}:{}", import.module(), import.name());
@@ -71,49 +71,21 @@ fn main() -> Result<()> {
         }
     }
 
+    let point = Point{x:2, y:3};
+
     let instance = Instance::new(&module, &imports)?;
-    // let begin_transfer_into_wasm = instance
-    //     .get_export("begin_transfer_into_wasm")
-    //     .and_then(|e| e.func())
-    //     .unwrap()
-    //     .get0::<i32>()?;
+    let (ptr, buffer_size) = binio::reserve_wasm_memory_buffer(&point, &instance);
+    println!("prepare_buffer ptr {} and buffer size {}", ptr, buffer_size);
+    binio::fill_buffer(&point, &instance, ptr, buffer_size).expect("error in fillling in buffer {}");
     
-    // let mem = instance.get_export("memory").unwrap().memory().unwrap();
-    // let mem_array: &mut [u8];
-    // unsafe{
-    //     mem_array = mem.data_unchecked_mut();
-    // }
-    // let wasm_in_mem_buffer_offset = begin_transfer_into_wasm().unwrap();
-    // let point = Point{x:3,y:4};
-    // let serialzied_size = bincode::serialized_size(&point).unwrap() as u32;
-    // let serialized_array = bincode::serialize(&point).unwrap();
-    // for i in 0..serialzied_size{
-    //     mem_array[wasm_in_mem_buffer_offset as usize + i as usize ] = serialized_array[i as usize];
-    // }
-    
-    // let end_transfer_into_wasm = instance
-    // .get_export("end_transfer_into_wasm")
-    // .and_then(|e| e.func())
-    // .unwrap()
-    // .get1::<i32, i32>()?;
-    
-    // end_transfer_into_wasm(serialzied_size as i32)?;
-    binio.instance = Some(&instance);
     let do_compute = instance
         .get_export("do_compute")
         .and_then(|e| e.func())
         .unwrap()
-        .get1::<i32, i32>()?;
-    let buffer_size =  bincode::serialized_size(&point).unwrap() as i32;
-
-    do_compute(buffer_size).unwrap();
-
-    // let mem_array: &[u8];
-    // unsafe{
-    //     mem_array = mem.data_unchecked();
-    // }
-    // let point_from_wasm: Point = bincode::deserialize(&mem_array[r..]).unwrap();
-    // println!("point from wasm is {:?}", point_from_wasm);
+        .get2::<i32, i32, i32>().unwrap();
+    
+    let result = prepare_buffer_func(buffer_size).unwrap();
+    
     Ok(())
 }
 #[cfg(feature = "verbose")]
@@ -123,44 +95,5 @@ fn _debug_get_module_import_export_list(module: &Module){
     }
     for export in module.exports(){
         println!("in module exportType.name : {:?}", export.name());
-    }
-}
-
- fn wasm_binio_serilaize<T>(ptr: i32, len: i32, _point: &T) -> i32 where T: Serialize{
-    // let mem = instance.get_export("memory").unwrap().memory().unwrap();
-    // let mem_array: &mut [u8];
-    // unsafe{
-    //     mem_array = mem.data_unchecked_mut();
-    // }
-    // let serialized_array = bincode::serialize(point).unwrap();
-    // for i in 0..len{
-    //     mem_array[ptr as usize + i as usize ] = serialized_array[i as usize];
-    // }
-    println!("hi there, I am going to fill the buffer at {} length {}", ptr, len);
-    5
- }
-
- fn wasm_binio_deserilaize(ptr: i32, len: i32) -> i32 {
-    println!("hi there, I am going to get struct from the buffer at {} length {}", ptr, len);
-    6
- }
-
-
- struct Wasm_binio_serilaize<'a>{
-    pub instance: Option<&'a Instance>
- }
- impl <'a> Wasm_binio_serilaize<'a>{
-     pub fn set_instance(&mut self, instance: &'a Instance){
-         self.instance = Some(instance);
-     }
- }
- impl <'a> wasmtime::Callable for Wasm_binio_serilaize<'a> {
-    fn call(&self, params: &[Val], results: &mut [Val]) -> Result<(), wasmtime::Trap> {
-        let mut value1 = params[0].unwrap_i32();
-        let mut value2 = params[1].unwrap_i32();
-        println!("inside binio_ser, v1 and v2 are {},{}", value1, value2);
-        results[0] = (value1 + value2).into();
-
-        Ok(())
     }
 }
