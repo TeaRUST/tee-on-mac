@@ -5,7 +5,7 @@ static mut BUFFERS : Vec<Vec<u8>> = Vec::new();
 pub fn wasm_prepare_buffer(size: i32) -> i64 {
     let buffer : Vec<u8> = Vec::with_capacity(size as usize);
     let ptr = buffer.as_ptr() as i32;
-    unsafe{BUFFERS.push(buffer)};
+    //unsafe{BUFFERS.push(buffer)};
     join_i32_to_i64(ptr, size )
 }
 pub fn wasm_deserialize<'a, T>(offset:i32, size:i32)->T where T: Deserialize<'a> {
