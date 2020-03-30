@@ -8,7 +8,7 @@ static mut buffer: Vec<u8> = Vec::new();//: Vec<u8> = Vec::with_capacity(i32::MA
 
 pub fn wasm_prepare_buffer(size: i32) -> i64 {
     unsafe {
-        buffer.shrink_to(size as usize);
+        buffer.set_len(size as usize);
     
         let len = buffer.capacity() as i32;
         let ptr = buffer.as_ptr() as i32;

@@ -17,9 +17,9 @@ pub fn fill_buffer<T> (obj: &T, instance: &Instance, ptr:i32, len:i32) -> Result
     let mem = instance.get_export("memory").unwrap().memory().unwrap();
     let mem_array: &mut [u8];
     let serialized_array = bincode::serialize(obj).unwrap();
-    if serialized_array.len() != len as usize {
-        return Err("memory allocated in different size");
-    }
+    // if serialized_array.len() != len as usize {
+    //     return Err("memory allocated in different size");
+    // }
     unsafe{
         mem_array = mem.data_unchecked_mut();
         for i in 0..len {
