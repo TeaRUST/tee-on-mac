@@ -1,4 +1,9 @@
-
+use serde::{Serialize, Deserialize};
+#[derive(Serialize, Deserialize, PartialEq, Debug)] 
+pub struct Point {
+    x: i32,
+    y: i32,
+}
 // fn store_value_to_out_wasm_memory_buffer<T>(value: &T) 
 //     -> u32 where T: Serialize{
     
@@ -81,7 +86,8 @@ fn prepare_buffer(buffer_size: i32)->i64 {
 
 #[no_mangle]
 fn do_compute(ptr:i32, buffer_size: i32)->i32{
-    let point<Point> = binio_wasm::wasm_deserialize(ptr, buffer_size);
+    let point : Point = binio_wasm::wasm_deserialize(ptr, buffer_size);
+    1
 }
 
 // #[no_mangle]

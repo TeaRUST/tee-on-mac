@@ -11,3 +11,4 @@ crate-type = ['cdylib']
 
 [dependencies]
 binio-wasm = { path ="../../binio-wasm"}
+serde = { version = "1.0", features = ["derive"] }

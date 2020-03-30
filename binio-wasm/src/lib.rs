@@ -1,18 +1,25 @@
+#![feature(shrink_to)]
+
 use bincode;
 use serde::{Serialize, Deserialize};
 use std::ptr;
-pub fn wasm_prepare_buffer(size: i32) -> i64 {
-    let buffer_vec: Vec<u8> = Vec::with_capacity(size as usize);
-    let len = buffer_vec.capacity() as i32;
-    let ptr = buffer_vec.as_ptr() as i32;
-    join_i32_to_i64(ptr, len )
 
+static mut buffer: Vec<u8> = Vec::new();//: Vec<u8> = Vec::with_capacity(i32::MAX as usize);
+
+pub fn wasm_prepare_buffer(size: i32) -> i64 {
+    unsafe {
+        buffer.shrink_to(size as usize);
+    
+        let len = buffer.capacity() as i32;
+        let ptr = buffer.as_ptr() as i32;
+        join_i32_to_i64(ptr, len )
+    }
 }
 pub fn wasm_deserialize<'a, T>(offset:i32, len:i32)->T where T: Deserialize<'a> {
     unsafe{
         
-        let buff_pointer = (offset as *const u8);
-        let buffer : Vec<u8> = Vec::from_raw_parts(offset as *mut u8, len as usize, len as usize);
+        //let buff_pointer = (offset as *const u8);
+        //buffer = Vec::from_raw_parts(offset as *mut u8, len as usize, len as usize);
         let result: T = bincode::deserialize(& buffer).unwrap();
         result.into()
     }

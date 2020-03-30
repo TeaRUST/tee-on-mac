@@ -84,7 +84,7 @@ fn main() -> Result<()> {
         .unwrap()
         .get2::<i32, i32, i32>().unwrap();
     
-    let result = prepare_buffer_func(buffer_size).unwrap();
+    let result = do_compute(ptr, buffer_size).unwrap();
     
     Ok(())
 }
