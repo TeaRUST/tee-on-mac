@@ -2,28 +2,15 @@
 
 use bincode;
 use serde::{Serialize, Deserialize};
-use std::ptr;
-
-static mut buffer: Vec<u8> = Vec::new();//: Vec<u8> = Vec::with_capacity(i32::MAX as usize);
 
 pub fn wasm_prepare_buffer(size: i32) -> i64 {
-    unsafe {
-        buffer.set_len(size as usize);
-    
-        let len = buffer.capacity() as i32;
-        let ptr = buffer.as_ptr() as i32;
-        join_i32_to_i64(ptr, len )
-    }
+    let buffer : Vec<u8> = Vec::with_capacity(size as usize);
+    let ptr = buffer.as_ptr() as i32;
+    join_i32_to_i64(ptr, size )
 }
-pub fn wasm_deserialize<'a, T>(offset:i32, len:i32)->T where T: Deserialize<'a> {
-    unsafe{
-        
-        //let buff_pointer = (offset as *const u8);
-        //buffer = Vec::from_raw_parts(offset as *mut u8, len as usize, len as usize);
-        let result: T = bincode::deserialize(& buffer).unwrap();
-        result.into()
-    }
-    
+pub fn wasm_deserialize<'a, T>(offset:i32, size:i32)->T where T: Deserialize<'a> {
+    let slice = unsafe { std::slice::from_raw_parts(offset as *const u8, size as usize) };
+    bincode::deserialize(slice).unwrap()
 }
 pub fn join_i32_to_i64( a:i32, b:i32)->i64 {
     //((a as i64) << 32) | (b as i64)

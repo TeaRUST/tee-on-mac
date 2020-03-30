@@ -87,10 +87,7 @@ fn prepare_buffer(buffer_size: i32)->i64 {
 #[no_mangle]
 fn do_compute(ptr:i32, buffer_size: i32)->i32{
     let point : Point = binio_wasm::wasm_deserialize(ptr, buffer_size);
+    println!("point is {:?}", point);
     1
 }
 
-// #[no_mangle]
-// fn transfer_out_from_wasm() -> i32{
-//     get_out_wasm_memory_buffer_pointer() as i32 
-// }
