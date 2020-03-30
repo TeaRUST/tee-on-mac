@@ -89,10 +89,10 @@ fn main() -> Result<()> {
         .unwrap()
         .get2::<i32, i32, i32>().unwrap();
     
-    let result = do_compute(ptr1, buffer_size1).unwrap();
 
     let result = do_compute(ptr2, buffer_size2).unwrap();
     
+    let result = do_compute(ptr1, buffer_size1).unwrap();
     Ok(())
 }
 #[cfg(feature = "verbose")]
