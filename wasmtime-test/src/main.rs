@@ -71,12 +71,17 @@ fn main() -> Result<()> {
         }
     }
 
-    let point = Point{x:2, y:3};
+    let point1 = Point{x:2, y:3};
+    let point2 = Point{x:8, y:9};
 
     let instance = Instance::new(&module, &imports)?;
-    let (ptr, buffer_size) = binio::reserve_wasm_memory_buffer(&point, &instance);
-    println!("prepare_buffer ptr {} and buffer size {}", ptr, buffer_size);
-    binio::fill_buffer(&point, &instance, ptr, buffer_size).expect("error in fillling in buffer {}");
+    let (ptr1, buffer_size1) = binio::reserve_wasm_memory_buffer(&point1, &instance);
+    println!("prepare_buffer ptr1 {} and buffer size1 {}", ptr1, buffer_size1);
+    binio::fill_buffer(&point1, &instance, ptr1, buffer_size1).expect("error in fillling in buffer {}");
+
+    let (ptr2, buffer_size2) = binio::reserve_wasm_memory_buffer(&point2, &instance);
+    println!("prepare_buffer ptr2 {} and buffer size2 {}", ptr2, buffer_size2);
+    binio::fill_buffer(&point2, &instance, ptr2, buffer_size2).expect("error in fillling in buffer {}");
     
     let do_compute = instance
         .get_export("do_compute")
@@ -84,7 +89,9 @@ fn main() -> Result<()> {
         .unwrap()
         .get2::<i32, i32, i32>().unwrap();
     
-    let result = do_compute(ptr, buffer_size).unwrap();
+    let result = do_compute(ptr1, buffer_size1).unwrap();
+
+    let result = do_compute(ptr2, buffer_size2).unwrap();
     
     Ok(())
 }
