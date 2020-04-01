@@ -4,8 +4,6 @@ use wasmtime_wasi::{Wasi, WasiCtxBuilder};
 use binio;
 use serde::{Serialize, Deserialize};
 
-use std::time::{Duration, Instant};
-
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Copy)] 
 pub struct Point {
     x: i32,
@@ -35,8 +33,8 @@ fn main() -> Result<()> {
         .build().expect("error here")
     };
 
-    let mut point1 = Point{x:2, y:3, name: "jacky"};
-    let mut point2 = Point{x:8, y:9, name: "kevin"};
+    let point1 = Point{x:2, y:3, name: "jacky"};
+    let point2 = Point{x:8, y:9, name: "kevin"};
 
     let wasi = Wasi::new(&store, wcb);
     let mut imports = Vec::new();
@@ -67,21 +65,6 @@ fn main() -> Result<()> {
                         });
                         imports.push(Extern::from(wasm_binio_serilaize_function));
                     },
-                    "wasm_binio_serilaize" => { 
-                        let func_type : FuncType = FuncType::new(
-                            Box::new([ValType::I32, ValType::I32]),
-                            Box::new([ValType::I32])
-                        );
-                        let wasm_binio_serilaize_function : Func = Func::wrap(&module.store(), |caller: Caller, ptr: i32, len: i32 | -> i32 {
-                            println!("inside");
-
-                            1
-                        });
-                        imports.push(Extern::from(wasm_binio_serilaize_function));
-                    },
-                    "wasm_binio_deserialize" => {
-                        imports.push(Extern::from(Func::wrap(&module.store(), | caller: Caller, cptr: i32, len:i32|->i32 {0})));
-                    },
                     _default => {
                         panic!("Found unresolved import function! {}:{}", import.module(), import.name());
                     },
@@ -101,25 +84,8 @@ fn main() -> Result<()> {
     
 
     let instance = Instance::new(&module, &imports)?;
-        // let (ptr1, buffer_size1) = binio::reserve_wasm_memory_buffer(&point1, &instance);
-        // println!("prepare_buffer ptr1 {} and buffer size1 {}", ptr1, buffer_size1);
-    
-    //binio::fill_buffer(&point1, &instance, ptr1, buffer_size1).expect("error in fillling in buffer {}");
-
-    // let (ptr2, buffer_size2) = binio::reserve_wasm_memory_buffer(&point2, &instance);
-    // println!("prepare_buffer ptr2 {} and buffer size2 {}", ptr2, buffer_size2);
-    // binio::fill_buffer(&point2, &instance, ptr2, buffer_size2).expect("error in fillling in buffer {}");
-    
     let result: React= binio::call_stub(&instance, &(point1, point2), "do_compute");
     println!("return React {:?}", result);
-    // let do_compute = instance
-    //     .get_export("do_compute")
-    //     .and_then(|e| e.func())
-    //     .unwrap()
-    //     .get2::<i32, i32, i32>().unwrap();
-    
-
-    // let result = do_compute(ptr2, buffer_size2).unwrap();
     
     Ok(())
 }
@@ -134,7 +100,6 @@ fn _debug_get_module_import_export_list(module: &Module){
 }
 
 fn get_btc_price() -> Result<i64> {
-    std::thread::sleep_ms(2000);
 
     Ok(5000)
 }

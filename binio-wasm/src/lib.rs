@@ -10,7 +10,7 @@ pub fn wasm_prepare_buffer(size: i32) -> i64 {
 }
 pub fn wasm_deserialize<'a, T>(offset:i32, size:i32)->T where T: Deserialize<'a> {
     let slice = unsafe { std::slice::from_raw_parts(offset as *const _, size as usize) };
-    let buffer_would_be_dropped = unsafe{BUFFERS.pop()};
+    let _buffer_would_be_dropped = unsafe{BUFFERS.pop()};
     bincode::deserialize(slice).unwrap()
 }
 
@@ -20,7 +20,7 @@ pub fn wasm_serialize<'a, T>(value: &T)->i64 where T: Serialize {
     println!("in wasm_serialize, result ptr and len {},{}", result_ptr, result_len);
     let serialized_array = bincode::serialize(value).unwrap();
     println!("serialzied_array: {:?}", &serialized_array);
-    let mut slice = unsafe { std::slice::from_raw_parts_mut(result_ptr as *mut _, result_len as usize)};
+    let slice = unsafe { std::slice::from_raw_parts_mut(result_ptr as *mut _, result_len as usize)};
     for i in 0..result_len {
         slice[i as usize] = serialized_array[i as usize];
     }

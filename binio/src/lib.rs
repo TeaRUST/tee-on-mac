@@ -1,13 +1,6 @@
 
 use wasmtime::Instance;
 use serde::{Serialize, Deserialize};
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Copy)] 
-pub struct React {
-    left: i32,
-    right: i32,
-    top: i32,
-    bottom: i32,
-}
 
 fn reserve_wasm_memory_buffer<T> (obj: &T, instance: &Instance ) -> (i32, i32) where T: Serialize {
     let buffer_size = bincode::serialized_size(obj).unwrap() as i32; 
@@ -25,9 +18,6 @@ fn fill_buffer<T> (obj: &T, instance: &Instance, ptr:i32, len:i32) -> Result<(),
     let mem = instance.get_export("memory").unwrap().memory().unwrap();
     let mem_array: &mut [u8];
     let serialized_array = bincode::serialize(obj).unwrap();
-    // if serialized_array.len() != len as usize {
-    //     return Err("memory allocated in different size");
-    // }
     unsafe{
         mem_array = mem.data_unchecked_mut();
         for i in 0..len {
@@ -59,17 +49,11 @@ pub fn call_stub <'a, T, R> (instance: &'a Instance, arg: &T, func_name: &str) -
 
     let result_in_i64 = do_compute(arg_buffer_ptr, arg_buffer_len).expect("do_compute error"); //TODO, handle error
     let (result_buffer_ptr, result_buffer_len) = split_i64_to_i32(result_in_i64);
-    println!("result ptr and len {},{}", result_buffer_ptr, result_buffer_len);
     let mem = instance.get_export("memory").unwrap().memory().expect("memory fail");
     let mem_array_ref = unsafe {mem.data_unchecked()};
 
     let start_ptr = mem_array_ref.as_ptr().wrapping_offset(result_buffer_ptr as isize);
     let a = unsafe{std::slice::from_raw_parts(start_ptr, result_buffer_len as usize)};
-    println!("a is {:?},", a);
-    //println!("R is {:?}", R);
-    //let rr : React =bincode::deserialize(a).unwrap();
-    // println!("rr is {:?}",rr);
-    // Ok(rr)
     bincode::deserialize(a).expect("deseralize error")
 }
 
