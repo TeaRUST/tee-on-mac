@@ -1,7 +1,7 @@
 
 use wasmtime::Instance;
 use serde::{Serialize, Deserialize};
-pub fn reserve_wasm_memory_buffer<T> (obj: &T, instance: &Instance ) -> (i32, i32) where T: Serialize {
+fn reserve_wasm_memory_buffer<T> (obj: &T, instance: &Instance ) -> (i32, i32) where T: Serialize {
     let buffer_size = bincode::serialized_size(obj).unwrap() as i32; 
     let prepare_buffer_func = instance
         .get_export("prepare_buffer")
@@ -13,7 +13,7 @@ pub fn reserve_wasm_memory_buffer<T> (obj: &T, instance: &Instance ) -> (i32, i3
     split_i64_to_i32(result)
 }
 
-pub fn fill_buffer<T> (obj: &T, instance: &Instance, ptr:i32, len:i32) -> Result<(), &'static str> where T: Serialize {
+fn fill_buffer<T> (obj: &T, instance: &Instance, ptr:i32, len:i32) -> Result<(), &'static str> where T: Serialize {
     let mem = instance.get_export("memory").unwrap().memory().unwrap();
     let mem_array: &mut [u8];
     let serialized_array = bincode::serialize(obj).unwrap();
@@ -37,6 +37,26 @@ pub fn join_i32_to_i64( a:i32, b:i32)->i64 {
 pub fn split_i64_to_i32( r: i64)->(i32,i32){
     ( (((r as u64) & 0xffffffff00000000) >> 32) as i32 , ((r as u64) & 0x00000000ffffffff) as i32)
 }
+
+pub fn call_stub <'a, T, R> (instance: &'a Instance, arg: &T, func_name: &str) -> Result<R, &'a str> 
+    where T: Serialize, R: Deserialize<'a> {
+    
+    let (arg_buffer_ptr, arg_buffer_len) = reserve_wasm_memory_buffer(arg, instance);
+    fill_buffer(&arg, instance, arg_buffer_ptr, arg_buffer_len)?;
+    let do_compute = instance
+        .get_export(func_name)
+        .and_then(|e| e.func())
+        .unwrap()
+        .get2::<i32, i32, i64>().unwrap();
+
+    let result_in_i64 = do_compute(arg_buffer_ptr, arg_buffer_len).unwrap(); //TODO, handle error
+    let (result_buffer_ptr, result_buffer_len) = split_i64_to_i32(result_in_i64);
+
+    let mem = instance.get_export("memory").unwrap().memory().unwrap();
+    let mem_array_ref = unsafe {mem.data_unchecked()};
+    bincode::deserialize(&mem_array_ref).unwrap()
+}
+
 #[cfg(test)]
 mod test{
     
