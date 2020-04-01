@@ -3,10 +3,14 @@ use wasmtime::*;
 use wasmtime_wasi::{Wasi, WasiCtxBuilder};
 use binio;
 use serde::{Serialize, Deserialize};
-#[derive(Serialize, Deserialize, PartialEq, Debug)] 
+
+use std::time::{Duration, Instant};
+
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Copy)] 
 pub struct Point {
     x: i32,
     y: i32,
+    name: &'static str
 }
 fn main() -> Result<()> {
     let store = Store::default();
@@ -22,6 +26,9 @@ fn main() -> Result<()> {
         .inherit_stdio()
         .build().expect("error here")
     };
+
+    let point1 = Point{x:2, y:3, name: "jacky"};
+    let point2 = Point{x:8, y:9, name: "kevin"};
 
     let wasi = Wasi::new(&store, wcb);
     let mut imports = Vec::new();
@@ -41,6 +48,17 @@ fn main() -> Result<()> {
             },
             "env" => {
                 match import.name(){
+                    "abc" => {
+                        let wasm_binio_serilaize_function : Func = Func::wrap(&module.store(), move || -> i64 {
+
+                            let price = get_btc_price().unwrap();
+                            println!(" ==== {:?}, {:?}", price, point1);
+
+                            price
+
+                        });
+                        imports.push(Extern::from(wasm_binio_serilaize_function));
+                    },
                     "wasm_binio_serilaize" => { 
                         let func_type : FuncType = FuncType::new(
                             Box::new([ValType::I32, ValType::I32]),
@@ -48,6 +66,7 @@ fn main() -> Result<()> {
                         );
                         let wasm_binio_serilaize_function : Func = Func::wrap(&module.store(), |caller: Caller, ptr: i32, len: i32 | -> i32 {
                             println!("inside");
+
                             1
                         });
                         imports.push(Extern::from(wasm_binio_serilaize_function));
@@ -71,12 +90,12 @@ fn main() -> Result<()> {
         }
     }
 
-    let point1 = Point{x:2, y:3};
-    let point2 = Point{x:8, y:9};
+    
 
     let instance = Instance::new(&module, &imports)?;
     let (ptr1, buffer_size1) = binio::reserve_wasm_memory_buffer(&point1, &instance);
     println!("prepare_buffer ptr1 {} and buffer size1 {}", ptr1, buffer_size1);
+    
     binio::fill_buffer(&point1, &instance, ptr1, buffer_size1).expect("error in fillling in buffer {}");
 
     let (ptr2, buffer_size2) = binio::reserve_wasm_memory_buffer(&point2, &instance);
@@ -104,3 +123,10 @@ fn _debug_get_module_import_export_list(module: &Module){
         println!("in module exportType.name : {:?}", export.name());
     }
 }
+
+fn get_btc_price() -> Result<i64> {
+    std::thread::sleep_ms(2000);
+
+    Ok(5000)
+}
+

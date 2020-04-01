@@ -3,6 +3,11 @@ use serde::{Serialize, Deserialize};
 pub struct Point {
     x: i32,
     y: i32,
+    name: String
+}
+
+extern "C" {
+    fn abc() -> i64;
 }
 // fn store_value_to_out_wasm_memory_buffer<T>(value: &T) 
 //     -> u32 where T: Serialize{
@@ -86,8 +91,17 @@ fn prepare_buffer(buffer_size: i32)->i64 {
 
 #[no_mangle]
 fn do_compute(ptr:i32, buffer_size: i32)->i32{
-    let point : Point = binio_wasm::wasm_deserialize(ptr, buffer_size);
+    let mut point : Point = binio_wasm::wasm_deserialize(ptr, buffer_size);
+    point.x = 111;
+
+    let price: i64;
+    unsafe {
+        price = abc();
+        println!("price is {}", price);
+    }
     println!("point is {:?}", point);
+
+
     1
 }
 
