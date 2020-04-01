@@ -6,6 +6,14 @@ pub struct Point {
     name: String
 }
 
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Copy)] 
+pub struct React {
+    left: i32,
+    right: i32,
+    top: i32,
+    bottom: i32,
+}
+
 extern "C" {
     fn abc() -> i64;
 }
@@ -101,7 +109,25 @@ fn do_compute(ptr:i32, buffer_size: i32)->i64{
         println!("price is {}", price);
     }
 
+    let (left, right) = {
+        if point_tuple.0.x > point_tuple.1.x{
+            (point_tuple.1.x, point_tuple.0.x)
+        }
+        else{
+            (point_tuple.0.x, point_tuple.1.x)
+        }
+    };
 
-    1 as i64
+    let (top, bottom) = {
+        if point_tuple.0.y > point_tuple.1.y {
+            (point_tuple.1.y, point_tuple.0.y)
+        }
+        else{
+            (point_tuple.0.y, point_tuple.1.y)
+        }
+    };
+    let rect = React{left, right, top , bottom};
+    println!("React is {:?}", rect);
+    binio_wasm::wasm_serialize(&rect)
 }
 

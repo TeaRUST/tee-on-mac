@@ -12,6 +12,14 @@ pub struct Point {
     y: i32,
     name: &'static str
 }
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Copy)] 
+pub struct React {
+    left: i32,
+    right: i32,
+    top: i32,
+    bottom: i32,
+}
+
 fn main() -> Result<()> {
     let store = Store::default();
     let module = Module::from_file(&store, "demo/target/wasm32-wasi/release/demo.wasm")?;
@@ -102,8 +110,8 @@ fn main() -> Result<()> {
     // println!("prepare_buffer ptr2 {} and buffer size2 {}", ptr2, buffer_size2);
     // binio::fill_buffer(&point2, &instance, ptr2, buffer_size2).expect("error in fillling in buffer {}");
     
-    let result:i32 = binio::call_stub(&instance, &(point1, point2), "do_compute").expect("error in call stub");
-
+    let result: React= binio::call_stub(&instance, &(point1, point2), "do_compute");
+    println!("return React {:?}", result);
     // let do_compute = instance
     //     .get_export("do_compute")
     //     .and_then(|e| e.func())
