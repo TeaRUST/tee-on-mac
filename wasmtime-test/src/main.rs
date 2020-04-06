@@ -4,6 +4,8 @@ use wasmtime_wasi::{Wasi, WasiCtxBuilder};
 use binio;
 use serde::{Serialize, Deserialize};
 
+mod tpm_cmd;
+
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Copy)] 
 pub struct Point {
     x: i32,
